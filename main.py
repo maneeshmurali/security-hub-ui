@@ -1,4 +1,5 @@
 import logging
+import urllib.parse
 from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Query, Depends
@@ -510,6 +511,20 @@ async def test_health():
 async def test_ping():
     """Simple ping endpoint"""
     return {"message": "pong"}
+
+@app.get("/api/test/list-finding-ids")
+async def test_list_finding_ids():
+    """List all finding IDs for debugging"""
+    try:
+        findings = data_manager.get_findings(limit=10)
+        finding_ids = [finding.id for finding in findings]
+        return {
+            "total_findings": len(finding_ids),
+            "finding_ids": finding_ids
+        }
+    except Exception as e:
+        logger.error(f"Error listing finding IDs: {e}")
+        return {"error": str(e)}
 
 @app.get("/api/test/finding-by-query")
 async def test_finding_by_query(finding_id: str = Query(...)):
