@@ -512,11 +512,21 @@ async def test_ping():
     """Simple ping endpoint"""
     return {"message": "pong"}
 
+@app.get("/api/test/simple-debug")
+async def test_simple_debug():
+    """Simple debug endpoint"""
+    return {"status": "working", "timestamp": datetime.utcnow().isoformat()}
+
+@app.get("/api/test/version")
+async def test_version():
+    """Test version endpoint"""
+    return {"version": "1.0.0", "status": "latest"}
+
 @app.get("/api/test/list-finding-ids")
 async def test_list_finding_ids():
     """List all finding IDs for debugging"""
     try:
-        findings = data_manager.get_findings(limit=10)
+        findings = data_manager.get_findings(limit=5)
         finding_ids = [finding.id for finding in findings]
         return {
             "total_findings": len(finding_ids),
@@ -529,20 +539,11 @@ async def test_list_finding_ids():
 @app.get("/api/test/finding-by-query")
 async def test_finding_by_query(finding_id: str = Query(...)):
     """Test finding lookup using query parameter instead of path parameter"""
-    logger.info(f"=== GET /api/test/finding-by-query called with finding_id: {finding_id} ===")
-    
-    # Decode URL-encoded finding ID
-    decoded_finding_id = urllib.parse.unquote(finding_id)
-    logger.info(f"Original finding_id: {finding_id}")
-    logger.info(f"Decoded finding_id: {decoded_finding_id}")
-    
-    finding = data_manager.get_finding_by_id(decoded_finding_id)
-    if not finding:
-        logger.warning(f"Finding not found: {decoded_finding_id}")
-        return {"found": False, "searched_id": decoded_finding_id}
-    
-    logger.info(f"Found finding: {finding.id} - {finding.title}")
-    return {"found": True, "finding": {"id": finding.id, "title": finding.title}}
+    try:
+        # Simple test first
+        return {"received_id": finding_id, "status": "received"}
+    except Exception as e:
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
