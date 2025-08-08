@@ -13,6 +13,8 @@ RUN dnf update -y && \
     python3-devel \
     gcc \
     sqlite \
+    shadow-utils \
+    curl \
     && dnf clean all
 
 # Create app directory
