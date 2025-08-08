@@ -568,7 +568,15 @@ async def test_finding_by_query(finding_id: str = Query(...)):
                     "title": finding.title,
                     "severity": finding.severity,
                     "status": finding.status,
-                    "product_name": finding.product_name
+                    "product_name": finding.product_name,
+                    "description": finding.description,
+                    "aws_account_id": finding.aws_account_id,
+                    "region": finding.region,
+                    "workflow_status": finding.workflow_status,
+                    "compliance_status": finding.compliance_status,
+                    "verification_state": finding.verification_state,
+                    "created_at": finding.created_at.isoformat() if finding.created_at else None,
+                    "updated_at": finding.updated_at.isoformat() if finding.updated_at else None
                 },
                 "comments": comments
             }
@@ -589,6 +597,64 @@ async def test_comments_simple():
         "status": "comments-endpoint-working",
         "version": "v1.0.0-build-2025-08-08-v2"
     }
+
+@app.post("/api/test/comments-add")
+async def add_comment_by_query(finding_id: str = Query(...), comment: str = Query(...), author: str = Query("User"), is_internal: bool = Query(False)):
+    """Add a comment using query parameters"""
+    try:
+        decoded_finding_id = urllib.parse.unquote(finding_id)
+        new_comment = data_manager.add_finding_comment(decoded_finding_id, comment, author, is_internal)
+        return {
+            "success": True,
+            "comment": {
+                "id": new_comment.id,
+                "finding_id": new_comment.finding_id,
+                "author": new_comment.author,
+                "comment": new_comment.comment,
+                "created_at": new_comment.created_at.isoformat(),
+                "updated_at": new_comment.updated_at.isoformat(),
+                "is_internal": new_comment.is_internal
+            },
+            "version": "v1.0.0-build-2025-08-08-v2"
+        }
+    except Exception as e:
+        return {"error": str(e), "version": "v1.0.0-build-2025-08-08-v2"}
+
+@app.put("/api/test/comments-update")
+async def update_comment_by_query(comment_id: int = Query(...), comment: str = Query(...), author: str = Query("User"), is_internal: bool = Query(False)):
+    """Update a comment using query parameters"""
+    try:
+        updated_comment = data_manager.update_finding_comment(comment_id, comment, author, is_internal)
+        if updated_comment:
+            return {
+                "success": True,
+                "comment": {
+                    "id": updated_comment.id,
+                    "finding_id": updated_comment.finding_id,
+                    "author": updated_comment.author,
+                    "comment": updated_comment.comment,
+                    "created_at": updated_comment.created_at.isoformat(),
+                    "updated_at": updated_comment.updated_at.isoformat(),
+                    "is_internal": updated_comment.is_internal
+                },
+                "version": "v1.0.0-build-2025-08-08-v2"
+            }
+        else:
+            return {"error": "Comment not found", "version": "v1.0.0-build-2025-08-08-v2"}
+    except Exception as e:
+        return {"error": str(e), "version": "v1.0.0-build-2025-08-08-v2"}
+
+@app.delete("/api/test/comments-delete")
+async def delete_comment_by_query(comment_id: int = Query(...)):
+    """Delete a comment using query parameters"""
+    try:
+        success = data_manager.delete_finding_comment(comment_id)
+        return {
+            "success": success,
+            "version": "v1.0.0-build-2025-08-08-v2"
+        }
+    except Exception as e:
+        return {"error": str(e), "version": "v1.0.0-build-2025-08-08-v2"}
 
 @app.get("/api/test/comments-by-query")
 async def test_comments_by_query(finding_id: str = Query(...)):

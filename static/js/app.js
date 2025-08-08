@@ -1108,31 +1108,35 @@ async function addComment() {
     }
     
     try {
-        const response = await fetch(`/api/findings/${dashboard.currentFindingId}/comments`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                comment: commentText,
-                author: 'User', // You could get this from user session
-                is_internal: isInternal
-            })
+        // Use query parameter approach for adding comments
+        const params = new URLSearchParams({
+            finding_id: encodeURIComponent(dashboard.currentFindingId),
+            comment: commentText,
+            author: 'User',
+            is_internal: isInternal
+        });
+        
+        const response = await fetch(`/api/test/comments-add?${params}`, {
+            method: 'POST'
         });
         
         if (!response.ok) {
             throw new Error('Failed to add comment');
         }
         
-        const newComment = await response.json();
-        dashboard.showSuccess('Comment added successfully');
-        
-        // Clear the form
-        document.getElementById('new-comment').value = '';
-        document.getElementById('internal-comment').checked = false;
-        
-        // Reload comments
-        await loadComments(dashboard.currentFindingId);
+        const result = await response.json();
+        if (result.success) {
+            dashboard.showSuccess('Comment added successfully');
+            
+            // Clear the form
+            document.getElementById('new-comment').value = '';
+            document.getElementById('internal-comment').checked = false;
+            
+            // Reload comments by refreshing the finding details
+            await dashboard.viewFinding(dashboard.currentFindingId);
+        } else {
+            throw new Error(result.error || 'Failed to add comment');
+        }
         
     } catch (error) {
         console.error('Error adding comment:', error);
@@ -1145,24 +1149,25 @@ async function editComment(commentId) {
     if (!newComment || !newComment.trim()) return;
     
     try {
-        const response = await fetch(`/api/findings/${dashboard.currentFindingId}/comments/${commentId}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                comment: newComment.trim(),
-                author: 'User',
-                is_internal: false
-            })
+        const params = new URLSearchParams({
+            comment_id: commentId,
+            comment: newComment.trim(),
+            author: 'User',
+            is_internal: false
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to update comment');
-        }
+        const response = await fetch(`/api/test/comments-update?${params}`, {
+            method: 'PUT'
+        });
         
-        dashboard.showSuccess('Comment updated successfully');
-        await loadComments(dashboard.currentFindingId);
+        const result = await response.json();
+        if (result.success) {
+            dashboard.showSuccess('Comment updated successfully');
+            // Reload comments by refreshing the finding details
+            await dashboard.viewFinding(dashboard.currentFindingId);
+        } else {
+            throw new Error(result.error || 'Failed to update comment');
+        }
         
     } catch (error) {
         console.error('Error updating comment:', error);
@@ -1174,16 +1179,22 @@ async function deleteComment(commentId) {
     if (!confirm('Are you sure you want to delete this comment?')) return;
     
     try {
-        const response = await fetch(`/api/findings/${dashboard.currentFindingId}/comments/${commentId}`, {
+        const params = new URLSearchParams({
+            comment_id: commentId
+        });
+        
+        const response = await fetch(`/api/test/comments-delete?${params}`, {
             method: 'DELETE'
         });
         
-        if (!response.ok) {
-            throw new Error('Failed to delete comment');
+        const result = await response.json();
+        if (result.success) {
+            dashboard.showSuccess('Comment deleted successfully');
+            // Reload comments by refreshing the finding details
+            await dashboard.viewFinding(dashboard.currentFindingId);
+        } else {
+            throw new Error(result.error || 'Failed to delete comment');
         }
-        
-        dashboard.showSuccess('Comment deleted successfully');
-        await loadComments(dashboard.currentFindingId);
         
     } catch (error) {
         console.error('Error deleting comment:', error);
