@@ -19,7 +19,7 @@ This is a **Security Monitoring Dashboard** that automatically collects and disp
 ### 1. **Data Collection** 📥
 - The application connects to AWS Security Hub (AWS's security monitoring service)
 - It automatically discovers all available AWS regions in your account
-- It checks for new security findings every 30 minutes **across all regions**
+- It checks for new security findings every 24 hours **across all regions** in efficient batches
 - It collects information like:
   - What the security issue is
   - How serious it is (Critical, High, Medium, Low)
@@ -152,14 +152,14 @@ When you click on a finding, you'll see:
    - Manages comments and history
 
 3. **Security Hub Client** (`security_hub_client.py`)
-   - Connects to AWS Security Hub
-   - Fetches security findings
-   - Handles AWS API calls
+   - Connects to AWS Security Hub across all regions
+   - Fetches security findings with batch processing
+   - Handles AWS API calls efficiently
 
 4. **Scheduler** (`scheduler.py`)
-   - Runs automatic data collection
-   - Manages polling intervals
-   - Handles background tasks
+   - Runs automatic data collection every 24 hours
+   - Manages polling intervals and batch processing
+   - Handles background tasks with progress logging
 
 5. **Frontend** (`static/js/app.js`, `templates/index.html`)
    - User interface
@@ -271,7 +271,8 @@ curl http://localhost:8000/api/findings?limit=1
 - **Responsive design** for mobile/desktop
 
 ### 🔄 Automation
-- **Automatic data collection** every 30 minutes
+- **Automatic data collection** every 24 hours with efficient batch processing
+- **Multi-region batch processing** (3 regions at a time) to avoid overwhelming AWS APIs
 - **Background processing** of findings
 - **Auto-refresh** of dashboard
 - **Scheduled backups** (if configured)

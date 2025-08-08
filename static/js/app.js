@@ -154,8 +154,17 @@ class SecurityHubDashboard {
 
     async loadControls() {
         try {
-            const response = await fetch('/api/controls');
+            this.showLoading();
+            
+            const params = this.buildFilterParams();
+            params.append('_t', Date.now()); // Cache busting
+            
+            console.log('Loading controls with params:', params.toString());
+            
+            const response = await fetch(`/api/controls?${params.toString()}`);
             const data = await response.json();
+            
+            console.log('Controls received:', data.controls.length);
             
             // Update stats with control-based metrics
             this.updateStatWithTrend('total-controls', data.total_controls, 'total-trend');
@@ -173,6 +182,7 @@ class SecurityHubDashboard {
             
         } catch (error) {
             console.error('Error loading controls:', error);
+            this.showError('Failed to load controls');
         }
     }
 
@@ -915,8 +925,8 @@ class SecurityHubDashboard {
         console.log('Current page before reset:', this.currentPage);
         this.currentPage = 0;
         console.log('Current page after reset:', this.currentPage);
-        console.log('Calling loadFindings()');
-        this.loadFindings();
+        console.log('Calling loadControls()');
+        this.loadControls();
     }
 
     refreshData() {
@@ -952,16 +962,18 @@ class SecurityHubDashboard {
     }
 
     showLoading() {
-        const tbody = document.getElementById('findings-tbody');
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </td>
-            </tr>
-        `;
+        const tbody = document.getElementById('controls-tbody');
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
     }
 
     showError(message) {

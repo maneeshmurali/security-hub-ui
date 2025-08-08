@@ -427,10 +427,40 @@ async def get_stats():
         }
 
 @app.get("/api/controls")
-async def get_controls():
+async def get_controls(
+    severity: Optional[str] = Query(None, description="Filter by severity (CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL)"),
+    status: Optional[str] = Query(None, description="Filter by status (ACTIVE, ARCHIVED)"),
+    product_name: Optional[str] = Query(None, description="Filter by product name"),
+    workflow_status: Optional[str] = Query(None, description="Filter by workflow status"),
+    region: Optional[str] = Query(None, description="Filter by AWS region"),
+    aws_account_id: Optional[str] = Query(None, description="Filter by AWS account ID"),
+    compliance_status: Optional[str] = Query(None, description="Filter by compliance status"),
+    start_date: Optional[str] = Query(None, description="Start date (YYYY-MM-DD)"),
+    end_date: Optional[str] = Query(None, description="End date (YYYY-MM-DD)")
+):
     """Get security controls grouped by control ID with affected resource counts"""
     try:
-        all_findings = data_manager.get_findings(limit=10000)
+        # Parse dates if provided
+        start_dt = None
+        end_dt = None
+        if start_date:
+            start_dt = datetime.strptime(start_date, "%Y-%m-%d")
+        if end_date:
+            end_dt = datetime.strptime(end_date, "%Y-%m-%d")
+        
+        # Get filtered findings
+        all_findings = data_manager.get_findings(
+            severity=severity,
+            status=status,
+            product_name=product_name,
+            workflow_status=workflow_status,
+            region=region,
+            aws_account_id=aws_account_id,
+            compliance_status=compliance_status,
+            start_date=start_dt,
+            end_date=end_dt,
+            limit=10000
+        )
         
         # Group findings by control ID
         controls = {}
@@ -680,13 +710,15 @@ async def test_version():
     """Test version endpoint"""
     return {
         "version": "1.0.0", 
-        "build": "2025-08-08-v2",
+        "build": "2025-08-08-v3",
         "status": "latest",
         "features": [
             "URL decoding for finding IDs",
             "CSPM findings support",
             "Comments system",
-            "Enhanced debugging"
+            "Enhanced debugging",
+            "24-hour refresh interval",
+            "Multi-region batch processing"
         ],
         "timestamp": datetime.utcnow().isoformat()
     }

@@ -51,14 +51,18 @@ class SecurityHubScheduler:
     def _fetch_and_store_findings(self):
         """Fetch findings from Security Hub and store them"""
         try:
-            logger.info("Starting scheduled Security Hub findings fetch")
+            logger.info("Starting scheduled Security Hub findings fetch (24-hour interval)")
             start_time = datetime.utcnow()
             
-            # Fetch all findings (including CSPM)
+            # Fetch all findings (now includes multi-region batch processing)
+            logger.info("Fetching all findings from all regions...")
             all_findings = self.client.get_all_findings()
+            logger.info(f"Fetched {len(all_findings)} total findings from all regions")
             
-            # Also fetch CSPM findings specifically
+            # Also fetch CSPM findings specifically (also multi-region)
+            logger.info("Fetching CSPM findings from all regions...")
             cspm_findings = self.client.get_cspm_findings()
+            logger.info(f"Fetched {len(cspm_findings)} CSPM findings from all regions")
             
             # Combine all findings
             findings = all_findings + cspm_findings
@@ -74,6 +78,7 @@ class SecurityHubScheduler:
             
             if findings:
                 # Store findings in database
+                logger.info("Storing findings in database...")
                 processed_count = self.data_manager.store_findings(findings)
                 
                 # Upload to S3 if configured
@@ -95,6 +100,7 @@ class SecurityHubScheduler:
                 
                 logger.info(f"Successfully processed {processed_count} findings in {duration:.2f} seconds")
                 logger.info(f"Total findings: {len(findings)}, CSPM findings: {len(cspm_findings)}")
+                logger.info(f"Next scheduled fetch: {settings.polling_interval_minutes} minutes from now")
             else:
                 logger.warning("No findings retrieved from Security Hub")
                 

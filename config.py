@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     s3_prefix: str = "security-hub-findings/"
     
     # Polling settings
-    polling_interval_minutes: int = 30
+    polling_interval_minutes: int = 1440  # 24 hours (24 * 60 minutes)
     
     # API settings
     host: str = "0.0.0.0"
