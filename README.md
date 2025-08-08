@@ -2,7 +2,7 @@
 
 ## 📖 What is this?
 
-This is a **Security Monitoring Dashboard** that automatically collects and displays **critical security issues** (called "findings") from your AWS account. Think of it as a **security alarm system** that focuses on **HIGH, CRITICAL, and MEDIUM** severity findings with **NEW** workflow status to help you prioritize the most important security issues.
+This is a **Security Monitoring Dashboard** that automatically collects and displays **critical security issues** (called "findings") from your AWS account. Think of it as a **security alarm system** that focuses on **HIGH, CRITICAL, and MEDIUM** severity findings with **FAILED** compliance status to help you prioritize the most important security issues.
 
 ### 🎯 What does it do?
 
@@ -19,7 +19,7 @@ This is a **Security Monitoring Dashboard** that automatically collects and disp
 ### 1. **Data Collection** 📥
 - The application connects to AWS Security Hub (AWS's security monitoring service)
 - It automatically discovers all available AWS regions in your account
-- It checks for **HIGH, CRITICAL, and MEDIUM** severity findings with **NEW** workflow status every 24 hours **across all regions** in efficient batches
+- It checks for **HIGH, CRITICAL, and MEDIUM** severity findings with **FAILED** compliance status every 24 hours **across all regions** in efficient batches
 - It collects information like:
   - What the security issue is
   - How serious it is (Critical, High, Medium, Low)

@@ -748,7 +748,7 @@ async def test_version():
     """Test version endpoint"""
     return {
         "version": "1.0.0", 
-        "build": "2025-08-08-v4",
+        "build": "2025-08-08-v6",
         "status": "latest",
         "features": [
             "URL decoding for finding IDs",
@@ -757,7 +757,7 @@ async def test_version():
             "Enhanced debugging",
             "24-hour refresh interval",
             "Multi-region batch processing",
-            "Critical findings focus (HIGH, CRITICAL, MEDIUM + NEW)"
+            "Critical findings focus (HIGH, CRITICAL, MEDIUM - FAILED compliance only)"
         ],
         "timestamp": datetime.utcnow().isoformat()
     }
@@ -778,10 +778,19 @@ async def test_database_status():
         new_findings = data_manager.get_findings(workflow_status="NEW", limit=10000)
         suppressed_findings = data_manager.get_findings(workflow_status="SUPPRESSED", limit=10000)
         
+        # Get findings by compliance status
+        failed_findings = data_manager.get_findings(compliance_status="FAILED", limit=10000)
+        passed_findings = data_manager.get_findings(compliance_status="PASSED", limit=10000)
+        
         # Get findings with new filters (HIGH, CRITICAL, MEDIUM + NEW)
         critical_new = data_manager.get_findings(severity="CRITICAL", workflow_status="NEW", limit=10000)
         high_new = data_manager.get_findings(severity="HIGH", workflow_status="NEW", limit=10000)
         medium_new = data_manager.get_findings(severity="MEDIUM", workflow_status="NEW", limit=10000)
+        
+        # Get findings with severity only (no workflow filter)
+        critical_all = data_manager.get_findings(severity="CRITICAL", limit=10000)
+        high_all = data_manager.get_findings(severity="HIGH", limit=10000)
+        medium_all = data_manager.get_findings(severity="MEDIUM", limit=10000)
         
         return {
             "database_status": "connected",
@@ -795,14 +804,24 @@ async def test_database_status():
                 "NEW": len(new_findings),
                 "SUPPRESSED": len(suppressed_findings)
             },
+            "by_compliance": {
+                "FAILED": len(failed_findings),
+                "PASSED": len(passed_findings)
+            },
             "critical_findings_with_new_workflow": {
                 "CRITICAL + NEW": len(critical_new),
                 "HIGH + NEW": len(high_new),
                 "MEDIUM + NEW": len(medium_new)
             },
-            "sample_critical_new": [{"id": f.id, "title": f.title} for f in critical_new[:3]] if critical_new else [],
-            "sample_high_new": [{"id": f.id, "title": f.title} for f in high_new[:3]] if high_new else [],
-            "sample_medium_new": [{"id": f.id, "title": f.title} for f in medium_new[:3]] if medium_new else []
+            "critical_findings_all_workflows": {
+                "CRITICAL (all workflows)": len(critical_all),
+                "HIGH (all workflows)": len(high_all),
+                "MEDIUM (all workflows)": len(medium_all)
+            },
+            "sample_critical_new": [{"id": f.id, "title": f.title, "compliance_status": f.compliance_status} for f in critical_new[:3]] if critical_new else [],
+            "sample_high_new": [{"id": f.id, "title": f.title, "compliance_status": f.compliance_status} for f in high_new[:3]] if high_new else [],
+            "sample_medium_new": [{"id": f.id, "title": f.title, "compliance_status": f.compliance_status} for f in medium_new[:3]] if medium_new else [],
+            "sample_critical_all": [{"id": f.id, "title": f.title, "compliance_status": f.compliance_status, "workflow_status": f.workflow_status} for f in critical_all[:3]] if critical_all else []
         }
     except Exception as e:
         logger.error(f"Error checking database status: {e}")

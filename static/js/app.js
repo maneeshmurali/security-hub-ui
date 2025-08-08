@@ -632,17 +632,17 @@ class SecurityHubDashboard {
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-sm">
+                                    <table class="table table-sm" id="control-details-table">
                                         <thead>
                                             <tr>
-                                                <th>Resource ID</th>
-                                                <th>Title</th>
-                                                <th>Severity</th>
-                                                <th>Status</th>
-                                                <th>Region</th>
-                                                <th>Product</th>
-                                                <th>Workflow</th>
-                                                <th>Created</th>
+                                                <th class="resizable-column" data-column="resource-id" title="Drag to resize column">Resource ID <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
+                                                <th class="resizable-column" data-column="title" title="Drag to resize column">Title <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
+                                                <th class="resizable-column" data-column="severity" title="Drag to resize column">Severity <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
+                                                <th class="resizable-column" data-column="status" title="Drag to resize column">Status <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
+                                                <th class="resizable-column" data-column="region" title="Drag to resize column">Region <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
+                                                <th class="resizable-column" data-column="product" title="Drag to resize column">Product <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
+                                                <th class="resizable-column" data-column="workflow" title="Drag to resize column">Workflow <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
+                                                <th class="resizable-column" data-column="created" title="Drag to resize column">Created <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -689,6 +689,11 @@ class SecurityHubDashboard {
             
             const modal = new bootstrap.Modal(document.getElementById('controlModal'));
             modal.show();
+            
+            // Initialize resizable columns for the control details table
+            setTimeout(() => {
+                this.initResizableColumns();
+            }, 100);
         } catch (error) {
             console.error('Error viewing control details:', error);
             this.showError('Error loading control details');

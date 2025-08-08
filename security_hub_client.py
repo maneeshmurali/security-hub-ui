@@ -56,7 +56,7 @@ class SecurityHubClient:
         """
         all_findings = []
         
-        # Default filters if none provided - fetch only HIGH, CRITICAL, MEDIUM with NEW workflow
+        # Default filters if none provided - fetch only HIGH, CRITICAL, MEDIUM with FAILED compliance status
         if filters is None:
             filters = {
                 'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
@@ -65,7 +65,7 @@ class SecurityHubClient:
                     {'Value': 'HIGH', 'Comparison': 'EQUALS'},
                     {'Value': 'MEDIUM', 'Comparison': 'EQUALS'}
                 ],
-                'WorkflowStatus': [{'Value': 'NEW', 'Comparison': 'EQUALS'}]
+                'ComplianceStatus': [{'Value': 'FAILED', 'Comparison': 'EQUALS'}]
             }
         
         # Check if multi-region processing is enabled (can be disabled via environment variable)
@@ -213,7 +213,7 @@ class SecurityHubClient:
         return self.get_findings()
     
     def get_cspm_findings(self) -> List[Dict[str, Any]]:
-        """Get Security Hub CSPM findings specifically with HIGH, CRITICAL, MEDIUM and NEW workflow"""
+        """Get Security Hub CSPM findings specifically with HIGH, CRITICAL, MEDIUM with FAILED compliance status"""
         filters = {
             'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
             'ProductName': [
@@ -226,7 +226,7 @@ class SecurityHubClient:
                 {'Value': 'HIGH', 'Comparison': 'EQUALS'},
                 {'Value': 'MEDIUM', 'Comparison': 'EQUALS'}
             ],
-            'WorkflowStatus': [{'Value': 'NEW', 'Comparison': 'EQUALS'}]
+            'ComplianceStatus': [{'Value': 'FAILED', 'Comparison': 'EQUALS'}]
         }
         return self.get_findings(filters)
     
