@@ -55,6 +55,18 @@ class FindingHistory(Base):
     changes = Column(JSON)  # Store what changed in this update
 
 
+class FindingComment(Base):
+    __tablename__ = "finding_comments"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    finding_id = Column(String, nullable=False)
+    author = Column(String, default="System")
+    comment = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    is_internal = Column(Boolean, default=False)  # For internal notes vs external comments
+
+
 # Database setup
 engine = create_engine(settings.database_url)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

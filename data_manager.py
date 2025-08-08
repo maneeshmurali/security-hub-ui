@@ -260,4 +260,81 @@ class DataManager:
                 finding.compliance_status
             ])
         
-        return output.getvalue() 
+        return output.getvalue()
+    
+    # Comment management methods
+    def get_finding_comments(self, finding_id: str) -> List[Any]:
+        """Get comments for a specific finding"""
+        db = SessionLocal()
+        try:
+            from models import FindingComment
+            return db.query(FindingComment).filter(
+                FindingComment.finding_id == finding_id
+            ).order_by(FindingComment.created_at.desc()).all()
+        finally:
+            db.close()
+    
+    def add_finding_comment(self, finding_id: str, comment: str, author: str = "System", is_internal: bool = False) -> Any:
+        """Add a comment to a finding"""
+        db = SessionLocal()
+        try:
+            from models import FindingComment
+            new_comment = FindingComment(
+                finding_id=finding_id,
+                comment=comment,
+                author=author,
+                is_internal=is_internal
+            )
+            db.add(new_comment)
+            db.commit()
+            db.refresh(new_comment)
+            return new_comment
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error adding comment: {e}")
+            raise
+        finally:
+            db.close()
+    
+    def update_finding_comment(self, comment_id: int, comment: str, author: str = "System", is_internal: bool = False) -> Optional[Any]:
+        """Update a comment for a finding"""
+        db = SessionLocal()
+        try:
+            from models import FindingComment
+            existing_comment = db.query(FindingComment).filter(FindingComment.id == comment_id).first()
+            if not existing_comment:
+                return None
+            
+            existing_comment.comment = comment
+            existing_comment.author = author
+            existing_comment.is_internal = is_internal
+            existing_comment.updated_at = datetime.utcnow()
+            
+            db.commit()
+            db.refresh(existing_comment)
+            return existing_comment
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error updating comment: {e}")
+            raise
+        finally:
+            db.close()
+    
+    def delete_finding_comment(self, comment_id: int) -> bool:
+        """Delete a comment for a finding"""
+        db = SessionLocal()
+        try:
+            from models import FindingComment
+            comment = db.query(FindingComment).filter(FindingComment.id == comment_id).first()
+            if not comment:
+                return False
+            
+            db.delete(comment)
+            db.commit()
+            return True
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error deleting comment: {e}")
+            raise
+        finally:
+            db.close() 

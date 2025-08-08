@@ -410,6 +410,7 @@ class SecurityHubDashboard {
 
     async viewFinding(findingId) {
         try {
+            this.currentFindingId = findingId; // Store the current finding ID
             const response = await fetch(`/api/findings/${findingId}`);
             const finding = await response.json();
             
@@ -970,4 +971,166 @@ function showNotification(title, message, type = 'info') {
 // Request notification permission
 if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
+}
+
+// Comment management functions
+let currentFindingId = null;
+
+function viewComments() {
+    const findingId = dashboard.currentFindingId;
+    if (!findingId) {
+        dashboard.showError('No finding selected');
+        return;
+    }
+    
+    currentFindingId = findingId;
+    loadComments(findingId);
+    
+    const modal = new bootstrap.Modal(document.getElementById('commentsModal'));
+    modal.show();
+}
+
+async function loadComments(findingId) {
+    try {
+        const response = await fetch(`/api/findings/${findingId}/comments`);
+        if (!response.ok) {
+            throw new Error('Failed to load comments');
+        }
+        
+        const comments = await response.json();
+        renderComments(comments);
+    } catch (error) {
+        console.error('Error loading comments:', error);
+        dashboard.showError('Failed to load comments');
+    }
+}
+
+function renderComments(comments) {
+    const commentsList = document.getElementById('comments-list');
+    
+    if (comments.length === 0) {
+        commentsList.innerHTML = '<p class="text-muted text-center">No comments yet. Be the first to add one!</p>';
+        return;
+    }
+    
+    commentsList.innerHTML = comments.map(comment => `
+        <div class="card mb-3 ${comment.is_internal ? 'border-warning' : 'border-primary'}">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${escapeHtml(comment.author)}</strong>
+                    ${comment.is_internal ? '<span class="badge bg-warning ms-2">Internal</span>' : ''}
+                </div>
+                <small class="text-muted">${new Date(comment.created_at).toLocaleString()}</small>
+            </div>
+            <div class="card-body">
+                <p class="card-text">${escapeHtml(comment.comment)}</p>
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editComment(${comment.id})">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
+                        <i class="fas fa-trash"></i> Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function addComment() {
+    const commentText = document.getElementById('new-comment').value.trim();
+    const isInternal = document.getElementById('internal-comment').checked;
+    
+    if (!commentText) {
+        dashboard.showError('Please enter a comment');
+        return;
+    }
+    
+    if (!currentFindingId) {
+        dashboard.showError('No finding selected');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/findings/${currentFindingId}/comments`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                comment: commentText,
+                author: 'User', // You could get this from user session
+                is_internal: isInternal
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to add comment');
+        }
+        
+        const newComment = await response.json();
+        dashboard.showSuccess('Comment added successfully');
+        
+        // Clear the form
+        document.getElementById('new-comment').value = '';
+        document.getElementById('internal-comment').checked = false;
+        
+        // Reload comments
+        await loadComments(currentFindingId);
+        
+    } catch (error) {
+        console.error('Error adding comment:', error);
+        dashboard.showError('Failed to add comment');
+    }
+}
+
+async function editComment(commentId) {
+    const newComment = prompt('Edit your comment:');
+    if (!newComment || !newComment.trim()) return;
+    
+    try {
+        const response = await fetch(`/api/findings/${currentFindingId}/comments/${commentId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                comment: newComment.trim(),
+                author: 'User',
+                is_internal: false
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update comment');
+        }
+        
+        dashboard.showSuccess('Comment updated successfully');
+        await loadComments(currentFindingId);
+        
+    } catch (error) {
+        console.error('Error updating comment:', error);
+        dashboard.showError('Failed to update comment');
+    }
+}
+
+async function deleteComment(commentId) {
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+    
+    try {
+        const response = await fetch(`/api/findings/${currentFindingId}/comments/${commentId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to delete comment');
+        }
+        
+        dashboard.showSuccess('Comment deleted successfully');
+        await loadComments(currentFindingId);
+        
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        dashboard.showError('Failed to delete comment');
+    }
 } 

@@ -394,6 +394,9 @@
                         <button class="btn btn-outline-info btn-sm" onclick="viewHistoryFromDetails()">
                             <i class="fas fa-history me-1"></i>View History
                         </button>
+                        <button class="btn btn-outline-success btn-sm" onclick="viewComments()">
+                            <i class="fas fa-comments me-1"></i>Comments
+                        </button>
                         <button class="btn btn-outline-secondary btn-sm" onclick="exportFinding()">
                             <i class="fas fa-download me-1"></i>Export
                         </button>
@@ -425,6 +428,41 @@
                 </div>
                 <div class="modal-body" id="history-modal-body">
                     <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Modal -->
+    <div class="modal fade" id="commentsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-comments me-2"></i>Finding Comments
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="new-comment" class="form-label">Add New Comment</label>
+                        <textarea class="form-control" id="new-comment" rows="3" placeholder="Enter your comment here..."></textarea>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="internal-comment">
+                            <label class="form-check-label" for="internal-comment">
+                                Internal note (not visible to external stakeholders)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-primary" onclick="addComment()">
+                            <i class="fas fa-plus me-1"></i>Add Comment
+                        </button>
+                    </div>
+                    <hr>
+                    <div id="comments-list">
+                        <!-- Comments will be loaded here -->
+                    </div>
                 </div>
             </div>
         </div>

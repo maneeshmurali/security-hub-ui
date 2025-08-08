@@ -76,6 +76,23 @@ class SchedulerStatusResponse(BaseModel):
     next_run: Optional[str]
     polling_interval_minutes: int
 
+class CommentRequest(BaseModel):
+    comment: str
+    author: str = "System"
+    is_internal: bool = False
+
+class CommentResponse(BaseModel):
+    id: int
+    finding_id: str
+    author: str
+    comment: str
+    created_at: datetime
+    updated_at: datetime
+    is_internal: bool
+
+    class Config:
+        from_attributes = True
+
 # Initialize data manager
 data_manager = DataManager()
 
@@ -146,6 +163,49 @@ async def get_finding_history(finding_id: str):
     if not history:
         raise HTTPException(status_code=404, detail="Finding history not found")
     return history
+
+@app.get("/api/findings/{finding_id}/comments", response_model=List[CommentResponse])
+async def get_finding_comments(finding_id: str):
+    """Get comments for a specific finding"""
+    comments = data_manager.get_finding_comments(finding_id)
+    return comments
+
+@app.post("/api/findings/{finding_id}/comments", response_model=CommentResponse)
+async def add_finding_comment(finding_id: str, comment_request: CommentRequest):
+    """Add a comment to a finding"""
+    # Verify finding exists
+    finding = data_manager.get_finding_by_id(finding_id)
+    if not finding:
+        raise HTTPException(status_code=404, detail="Finding not found")
+    
+    comment = data_manager.add_finding_comment(
+        finding_id=finding_id,
+        comment=comment_request.comment,
+        author=comment_request.author,
+        is_internal=comment_request.is_internal
+    )
+    return comment
+
+@app.put("/api/findings/{finding_id}/comments/{comment_id}", response_model=CommentResponse)
+async def update_finding_comment(finding_id: str, comment_id: int, comment_request: CommentRequest):
+    """Update a comment for a finding"""
+    comment = data_manager.update_finding_comment(
+        comment_id=comment_id,
+        comment=comment_request.comment,
+        author=comment_request.author,
+        is_internal=comment_request.is_internal
+    )
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return comment
+
+@app.delete("/api/findings/{finding_id}/comments/{comment_id}")
+async def delete_finding_comment(finding_id: str, comment_id: int):
+    """Delete a comment for a finding"""
+    success = data_manager.delete_finding_comment(comment_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Comment not found")
+    return {"message": "Comment deleted successfully"}
 
 @app.post("/api/findings/fetch")
 async def manual_fetch():
