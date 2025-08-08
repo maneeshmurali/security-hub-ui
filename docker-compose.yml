@@ -15,11 +15,12 @@ services:
       - DATABASE_URL=${DATABASE_URL:-postgresql://security_hub:security_hub_password@postgres:5432/security_hub}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
       - S3_PREFIX=${S3_PREFIX:-security-hub-findings/}
-      - POLLING_INTERVAL_MINUTES=${POLLING_INTERVAL_MINUTES:-30}
+      - POLLING_INTERVAL_MINUTES=${POLLING_INTERVAL_MINUTES:-1440}
       - HOST=0.0.0.0
       - PORT=8000
       - DEFAULT_SEVERITY_FILTER=${DEFAULT_SEVERITY_FILTER:-CRITICAL,HIGH,MEDIUM,LOW,INFORMATIONAL}
       - DEFAULT_STATUS_FILTER=${DEFAULT_STATUS_FILTER:-ACTIVE,SUPPRESSED}
+      - ENABLE_MULTI_REGION=${ENABLE_MULTI_REGION:-true}
     volumes:
       - ./data:/app/data:rw
       - ./logs:/app/logs:rw
@@ -27,11 +28,11 @@ services:
     networks:
       - security-hub-network
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/stats')"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/test/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
     depends_on:
       - postgres
       - redis

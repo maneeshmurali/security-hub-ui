@@ -243,8 +243,27 @@ async def delete_finding_comment(finding_id: str, comment_id: int):
 async def manual_fetch():
     """Manually trigger a findings fetch"""
     try:
-        scheduler.run_manual_fetch()
-        return {"message": "Manual fetch triggered successfully"}
+        logger.info("Manual fetch triggered")
+        
+        # Run fetch in a separate thread with timeout
+        import asyncio
+        import concurrent.futures
+        
+        def run_fetch():
+            scheduler = get_scheduler()
+            return scheduler.run_manual_fetch()
+        
+        # Run with 5-minute timeout
+        loop = asyncio.get_event_loop()
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = loop.run_in_executor(executor, run_fetch)
+            try:
+                await asyncio.wait_for(future, timeout=300)  # 5 minutes timeout
+                return {"message": "Manual fetch completed successfully"}
+            except asyncio.TimeoutError:
+                logger.error("Manual fetch timed out after 5 minutes")
+                return {"message": "Manual fetch timed out after 5 minutes", "status": "timeout"}
+                
     except Exception as e:
         logger.error(f"Error in manual fetch: {e}")
         raise HTTPException(status_code=500, detail="Error triggering manual fetch")
@@ -693,7 +712,21 @@ async def test_simple():
 @app.get("/api/test/health")
 async def test_health():
     """Health check endpoint"""
-    return {"status": "healthy", "service": "security-hub-api"}
+    try:
+        # Simple health check that doesn't depend on external services
+        return {
+            "status": "healthy", 
+            "service": "security-hub-api",
+            "timestamp": datetime.utcnow().isoformat(),
+            "version": "1.0.0",
+            "build": "2025-08-08-v3"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
 
 @app.get("/api/test/ping")
 async def test_ping():

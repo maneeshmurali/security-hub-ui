@@ -61,31 +61,50 @@ class SecurityHubClient:
                 'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}]
             }
         
+        # Check if multi-region processing is enabled (can be disabled via environment variable)
+        import os
+        enable_multi_region = os.getenv('ENABLE_MULTI_REGION', 'true').lower() == 'true'
+        
+        if not enable_multi_region:
+            logger.info("Multi-region processing disabled, using single region only")
+            return self._fetch_findings_from_regions([self.default_region], filters)
+        
         try:
             # Get all available regions
             regions = self._get_available_regions()
             logger.info(f"Found {len(regions)} regions to process")
             
-            # Process regions in batches to avoid overwhelming the system
-            batch_size = 3  # Process 3 regions at a time
+            # Limit to first 3 regions for maximum stability
+            regions = regions[:3]
+            logger.info(f"Processing limited set of regions: {regions}")
+            
+            # Process regions one at a time for maximum stability
+            batch_size = 1  # Process 1 region at a time
             for i in range(0, len(regions), batch_size):
                 batch_regions = regions[i:i + batch_size]
-                logger.info(f"Processing batch {i//batch_size + 1}: {batch_regions}")
+                logger.info(f"Processing region {i + 1}/{len(regions)}: {batch_regions}")
                 
-                batch_findings = self._fetch_findings_from_regions(batch_regions, filters)
-                all_findings.extend(batch_findings)
+                try:
+                    batch_findings = self._fetch_findings_from_regions(batch_regions, filters)
+                    all_findings.extend(batch_findings)
+                    logger.info(f"Successfully processed region {batch_regions[0]}")
+                except Exception as e:
+                    logger.error(f"Failed to process region {batch_regions[0]}: {e}")
+                    continue
                 
-                # Small delay between batches to be respectful to AWS APIs
+                # Longer delay between regions to be very respectful to AWS APIs
                 if i + batch_size < len(regions):
                     import time
-                    time.sleep(2)
+                    time.sleep(10)  # 10 second delay between regions
             
-            logger.info(f"Total findings fetched from all regions: {len(all_findings)}")
+            logger.info(f"Total findings fetched from {len(regions)} regions: {len(all_findings)}")
             return all_findings
             
         except Exception as e:
             logger.error(f"Error in batch fetching: {e}")
-            return []
+            # Fallback to single region if batch processing fails
+            logger.info("Falling back to single region processing")
+            return self._fetch_findings_from_regions([self.default_region], filters)
     
     def _fetch_findings_from_regions(self, regions: List[str], filters: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Fetch findings from a specific batch of regions"""
@@ -94,19 +113,39 @@ class SecurityHubClient:
         for region in regions:
             try:
                 logger.info(f"Fetching findings from region: {region}")
-                client = boto3.client('securityhub', region_name=region)
+                
+                # Create client with timeout configuration
+                config = boto3.session.Config(
+                    connect_timeout=30,  # 30 seconds connection timeout
+                    read_timeout=60,     # 60 seconds read timeout
+                    retries={'max_attempts': 2}  # Limit retries
+                )
+                client = boto3.client('securityhub', region_name=region, config=config)
                 
                 paginator = client.get_paginator('get_findings')
                 region_findings = []
                 
+                # Limit pagination to prevent infinite loops
+                page_count = 0
+                max_pages = 10  # Limit to 10 pages per region
+                
                 for page in paginator.paginate(Filters=filters):
+                    page_count += 1
+                    if page_count > max_pages:
+                        logger.warning(f"Reached max pages ({max_pages}) for region {region}, stopping pagination")
+                        break
+                        
                     findings = page.get('Findings', [])
                     for finding in findings:
                         finding['Region'] = region
                     region_findings.extend(findings)
+                    
+                    # Log progress
+                    if page_count % 5 == 0:
+                        logger.info(f"Processed {page_count} pages from {region}, found {len(region_findings)} findings so far")
                 
                 batch_findings.extend(region_findings)
-                logger.info(f"Fetched {len(region_findings)} findings from {region}")
+                logger.info(f"Fetched {len(region_findings)} findings from {region} in {page_count} pages")
                 
             except ClientError as e:
                 error_code = e.response['Error']['Code']

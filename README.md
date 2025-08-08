@@ -230,12 +230,18 @@ docker-compose up -d --build
 
 ### Common Issues
 
-1. **No findings showing**
+1. **Container showing as unhealthy**
+   - Check if multi-region processing is causing issues: Set `ENABLE_MULTI_REGION=false` in your `.env` file
+   - Verify AWS credentials and permissions
+   - Check application logs: `docker-compose logs -f security-hub-app`
+   - Try manual fetch: `curl -X POST http://localhost:8000/api/findings/fetch`
+
+2. **No findings showing**
    - Check AWS Security Hub is enabled
    - Verify IAM permissions
    - Check application logs
 
-2. **Database connection issues**
+3. **Database connection issues**
    - Verify PostgreSQL is running
    - Check DATABASE_URL in .env
    - Restart containers
@@ -273,6 +279,8 @@ curl http://localhost:8000/api/findings?limit=1
 ### 🔄 Automation
 - **Automatic data collection** every 24 hours with efficient batch processing
 - **Multi-region batch processing** (3 regions at a time) to avoid overwhelming AWS APIs
+- **Configurable multi-region processing** (can be disabled via `ENABLE_MULTI_REGION=false`)
+- **Resource optimization** with timeouts and pagination limits
 - **Background processing** of findings
 - **Auto-refresh** of dashboard
 - **Scheduled backups** (if configured)
