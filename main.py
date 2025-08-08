@@ -151,9 +151,12 @@ async def get_findings(
 @app.get("/api/findings/{finding_id}", response_model=FindingResponse)
 async def get_finding(finding_id: str):
     """Get a specific finding by ID"""
+    logger.info(f"=== GET /api/findings/{finding_id} called ===")
+    
     # Decode URL-encoded finding ID
     decoded_finding_id = urllib.parse.unquote(finding_id)
-    logger.info(f"Looking for finding: {decoded_finding_id}")
+    logger.info(f"Original finding_id: {finding_id}")
+    logger.info(f"Decoded finding_id: {decoded_finding_id}")
     
     finding = data_manager.get_finding_by_id(decoded_finding_id)
     if not finding:
@@ -465,6 +468,34 @@ async def test_url_decode(test_id: str):
         "decoded": decoded,
         "decoding_works": test_id != decoded
     }
+
+@app.get("/api/test/simple")
+async def test_simple():
+    """Simple test endpoint to verify API is working"""
+    return {"message": "API is working", "timestamp": datetime.utcnow().isoformat()}
+
+@app.get("/api/test/health")
+async def test_health():
+    """Health check endpoint"""
+    return {"status": "healthy", "service": "security-hub-api"}
+
+@app.get("/api/test/finding-by-query")
+async def test_finding_by_query(finding_id: str = Query(...)):
+    """Test finding lookup using query parameter instead of path parameter"""
+    logger.info(f"=== GET /api/test/finding-by-query called with finding_id: {finding_id} ===")
+    
+    # Decode URL-encoded finding ID
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    logger.info(f"Original finding_id: {finding_id}")
+    logger.info(f"Decoded finding_id: {decoded_finding_id}")
+    
+    finding = data_manager.get_finding_by_id(decoded_finding_id)
+    if not finding:
+        logger.warning(f"Finding not found: {decoded_finding_id}")
+        return {"found": False, "searched_id": decoded_finding_id}
+    
+    logger.info(f"Found finding: {finding.id} - {finding.title}")
+    return {"found": True, "finding": {"id": finding.id, "title": finding.title}}
 
 if __name__ == "__main__":
     import uvicorn
