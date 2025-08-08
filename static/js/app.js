@@ -1083,16 +1083,20 @@ class SecurityHubDashboard {
     }
 
     initResizableColumns() {
+        console.log('Initializing resizable columns...');
         const tables = document.querySelectorAll('table');
+        console.log('Found tables:', tables.length);
         
         tables.forEach(table => {
             const headers = table.querySelectorAll('th.resizable-column');
+            console.log(`Table ${table.id || 'unnamed'}: Found ${headers.length} resizable headers`);
             
             headers.forEach(header => {
                 let isResizing = false;
                 let startX, startWidth;
                 
                 const handleMouseDown = (e) => {
+                    console.log('Mouse down on resizable column:', header.textContent);
                     isResizing = true;
                     startX = e.pageX;
                     startWidth = header.offsetWidth;

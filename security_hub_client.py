@@ -1,5 +1,6 @@
 import boto3
 import logging
+import os
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from botocore.exceptions import ClientError, NoCredentialsError
@@ -68,7 +69,6 @@ class SecurityHubClient:
             }
         
         # Check if multi-region processing is enabled (can be disabled via environment variable)
-        import os
         enable_multi_region = os.getenv('ENABLE_MULTI_REGION', 'true').lower() == 'true'
         
         if not enable_multi_region:
