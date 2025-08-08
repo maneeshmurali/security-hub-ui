@@ -151,15 +151,24 @@ async def get_findings(
 @app.get("/api/findings/{finding_id}", response_model=FindingResponse)
 async def get_finding(finding_id: str):
     """Get a specific finding by ID"""
-    finding = data_manager.get_finding_by_id(finding_id)
+    # Decode URL-encoded finding ID
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    logger.info(f"Looking for finding: {decoded_finding_id}")
+    
+    finding = data_manager.get_finding_by_id(decoded_finding_id)
     if not finding:
+        logger.warning(f"Finding not found: {decoded_finding_id}")
         raise HTTPException(status_code=404, detail="Finding not found")
+    
+    logger.info(f"Found finding: {finding.id} - {finding.title}")
     return finding
 
 @app.get("/api/findings/{finding_id}/history", response_model=List[FindingHistoryResponse])
 async def get_finding_history(finding_id: str):
     """Get history for a specific finding"""
-    history = data_manager.get_finding_history(finding_id)
+    # Decode URL-encoded finding ID
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    history = data_manager.get_finding_history(decoded_finding_id)
     if not history:
         raise HTTPException(status_code=404, detail="Finding history not found")
     return history
@@ -167,19 +176,24 @@ async def get_finding_history(finding_id: str):
 @app.get("/api/findings/{finding_id}/comments", response_model=List[CommentResponse])
 async def get_finding_comments(finding_id: str):
     """Get comments for a specific finding"""
-    comments = data_manager.get_finding_comments(finding_id)
+    # Decode URL-encoded finding ID
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    comments = data_manager.get_finding_comments(decoded_finding_id)
     return comments
 
 @app.post("/api/findings/{finding_id}/comments", response_model=CommentResponse)
 async def add_finding_comment(finding_id: str, comment_request: CommentRequest):
     """Add a comment to a finding"""
+    # Decode URL-encoded finding ID
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
     # Verify finding exists
-    finding = data_manager.get_finding_by_id(finding_id)
+    finding = data_manager.get_finding_by_id(decoded_finding_id)
     if not finding:
         raise HTTPException(status_code=404, detail="Finding not found")
     
     comment = data_manager.add_finding_comment(
-        finding_id=finding_id,
+        finding_id=decoded_finding_id,
         comment=comment_request.comment,
         author=comment_request.author,
         is_internal=comment_request.is_internal
@@ -189,6 +203,9 @@ async def add_finding_comment(finding_id: str, comment_request: CommentRequest):
 @app.put("/api/findings/{finding_id}/comments/{comment_id}", response_model=CommentResponse)
 async def update_finding_comment(finding_id: str, comment_id: int, comment_request: CommentRequest):
     """Update a comment for a finding"""
+    # Decode URL-encoded finding ID
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
     comment = data_manager.update_finding_comment(
         comment_id=comment_id,
         comment=comment_request.comment,
@@ -202,6 +219,9 @@ async def update_finding_comment(finding_id: str, comment_id: int, comment_reque
 @app.delete("/api/findings/{finding_id}/comments/{comment_id}")
 async def delete_finding_comment(finding_id: str, comment_id: int):
     """Delete a comment for a finding"""
+    # Decode URL-encoded finding ID
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
     success = data_manager.delete_finding_comment(comment_id)
     if not success:
         raise HTTPException(status_code=404, detail="Comment not found")
@@ -396,7 +416,9 @@ async def debug_findings():
 async def debug_specific_finding(finding_id: str):
     """Debug endpoint to check a specific finding"""
     try:
-        finding = data_manager.get_finding_by_id(finding_id)
+        # Decode URL-encoded finding ID
+        decoded_finding_id = urllib.parse.unquote(finding_id)
+        finding = data_manager.get_finding_by_id(decoded_finding_id)
         if finding:
             return {
                 "found": True,
