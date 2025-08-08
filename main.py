@@ -151,7 +151,11 @@ async def get_findings(
 @app.get("/api/findings/{finding_id}", response_model=FindingResponse)
 async def get_finding(finding_id: str):
     """Get a specific finding by ID"""
-    finding = data_manager.get_finding_by_id(finding_id)
+    # Decode URL-encoded finding ID
+    import urllib.parse
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
+    finding = data_manager.get_finding_by_id(decoded_finding_id)
     if not finding:
         raise HTTPException(status_code=404, detail="Finding not found")
     return finding
@@ -159,7 +163,11 @@ async def get_finding(finding_id: str):
 @app.get("/api/findings/{finding_id}/history", response_model=List[FindingHistoryResponse])
 async def get_finding_history(finding_id: str):
     """Get history for a specific finding"""
-    history = data_manager.get_finding_history(finding_id)
+    # Decode URL-encoded finding ID
+    import urllib.parse
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
+    history = data_manager.get_finding_history(decoded_finding_id)
     if not history:
         raise HTTPException(status_code=404, detail="Finding history not found")
     return history
@@ -167,19 +175,27 @@ async def get_finding_history(finding_id: str):
 @app.get("/api/findings/{finding_id}/comments", response_model=List[CommentResponse])
 async def get_finding_comments(finding_id: str):
     """Get comments for a specific finding"""
-    comments = data_manager.get_finding_comments(finding_id)
+    # Decode URL-encoded finding ID
+    import urllib.parse
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
+    comments = data_manager.get_finding_comments(decoded_finding_id)
     return comments
 
 @app.post("/api/findings/{finding_id}/comments", response_model=CommentResponse)
 async def add_finding_comment(finding_id: str, comment_request: CommentRequest):
     """Add a comment to a finding"""
+    # Decode URL-encoded finding ID
+    import urllib.parse
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
     # Verify finding exists
-    finding = data_manager.get_finding_by_id(finding_id)
+    finding = data_manager.get_finding_by_id(decoded_finding_id)
     if not finding:
         raise HTTPException(status_code=404, detail="Finding not found")
     
     comment = data_manager.add_finding_comment(
-        finding_id=finding_id,
+        finding_id=decoded_finding_id,
         comment=comment_request.comment,
         author=comment_request.author,
         is_internal=comment_request.is_internal
@@ -189,6 +205,10 @@ async def add_finding_comment(finding_id: str, comment_request: CommentRequest):
 @app.put("/api/findings/{finding_id}/comments/{comment_id}", response_model=CommentResponse)
 async def update_finding_comment(finding_id: str, comment_id: int, comment_request: CommentRequest):
     """Update a comment for a finding"""
+    # Decode URL-encoded finding ID
+    import urllib.parse
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
     comment = data_manager.update_finding_comment(
         comment_id=comment_id,
         comment=comment_request.comment,
@@ -202,6 +222,10 @@ async def update_finding_comment(finding_id: str, comment_id: int, comment_reque
 @app.delete("/api/findings/{finding_id}/comments/{comment_id}")
 async def delete_finding_comment(finding_id: str, comment_id: int):
     """Delete a comment for a finding"""
+    # Decode URL-encoded finding ID
+    import urllib.parse
+    decoded_finding_id = urllib.parse.unquote(finding_id)
+    
     success = data_manager.delete_finding_comment(comment_id)
     if not success:
         raise HTTPException(status_code=404, detail="Comment not found")
@@ -323,25 +347,25 @@ async def get_stats():
     try:
         # Get basic stats
         all_findings = data_manager.get_findings(limit=10000)
-        
+
         # Count by severity
         severity_counts = {}
         status_counts = {}
         product_counts = {}
-        
+
         for finding in all_findings:
             # Severity counts
             severity = finding.severity or "UNKNOWN"
             severity_counts[severity] = severity_counts.get(severity, 0) + 1
-            
+
             # Status counts
             status = finding.status or "UNKNOWN"
             status_counts[status] = status_counts.get(status, 0) + 1
-            
+
             # Product counts
             product = finding.product_name or "UNKNOWN"
             product_counts[product] = product_counts.get(product, 0) + 1
-        
+
         return {
             "total_findings": len(all_findings),
             "severity_distribution": severity_counts,
@@ -359,6 +383,38 @@ async def get_stats():
             "product_distribution": {},
             "last_updated": datetime.utcnow().isoformat()
         }
+
+@app.get("/api/debug/findings")
+async def debug_findings():
+    """Debug endpoint to check finding data"""
+    try:
+        findings = data_manager.get_findings(limit=5)
+        debug_data = []
+        
+        for finding in findings:
+            debug_data.append({
+                "id": finding.id,
+                "title": finding.title,
+                "severity": finding.severity,
+                "status": finding.status,
+                "product_name": finding.product_name,
+                "aws_account_id": finding.aws_account_id,
+                "region": finding.region,
+                "created_at": finding.created_at.isoformat() if finding.created_at else None,
+                "updated_at": finding.updated_at.isoformat() if finding.updated_at else None,
+                "workflow_status": finding.workflow_status,
+                "compliance_status": finding.compliance_status,
+                "verification_state": finding.verification_state,
+                "description": finding.description[:100] + "..." if finding.description and len(finding.description) > 100 else finding.description
+            })
+        
+        return {
+            "total_findings": len(findings),
+            "sample_findings": debug_data
+        }
+    except Exception as e:
+        logger.error(f"Error in debug endpoint: {e}")
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

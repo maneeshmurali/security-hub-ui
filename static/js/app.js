@@ -414,6 +414,9 @@ class SecurityHubDashboard {
             const response = await fetch(`/api/findings/${findingId}`);
             const finding = await response.json();
             
+            // Debug: Log the finding data
+            console.log('Finding data received:', finding);
+            
             const modalBody = document.getElementById('finding-modal-body');
             modalBody.innerHTML = `
                 <div class="row">
