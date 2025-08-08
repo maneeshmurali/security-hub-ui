@@ -31,29 +31,29 @@
     <div class="container-fluid mt-4">
         <!-- Enhanced Stats Cards -->
         <div class="row mb-4">
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="card bg-primary text-white stats-card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
-                                <h3 id="total-findings">-</h3>
-                                <p class="mb-0 stats-label">Total Findings</p>
+                                <h3 id="total-controls">-</h3>
+                                <p class="mb-0 stats-label">Security Controls</p>
                                 <small class="stats-trend" id="total-trend">↗️ +0%</small>
                             </div>
                             <div class="align-self-center">
-                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                <i class="fas fa-shield-alt fa-2x"></i>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="card bg-danger text-white stats-card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
-                                <h3 id="critical-findings">-</h3>
-                                <p class="mb-0 stats-label">Critical</p>
+                                <h3 id="critical-controls">-</h3>
+                                <p class="mb-0 stats-label">Critical Controls</p>
                                 <small class="stats-trend" id="critical-trend">↗️ +0%</small>
                             </div>
                             <div class="align-self-center">
@@ -63,13 +63,13 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="card bg-warning text-white stats-card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
-                                <h3 id="high-findings">-</h3>
-                                <p class="mb-0 stats-label">High</p>
+                                <h3 id="high-controls">-</h3>
+                                <p class="mb-0 stats-label">High Controls</p>
                                 <small class="stats-trend" id="high-trend">↗️ +0%</small>
                             </div>
                             <div class="align-self-center">
@@ -79,65 +79,17 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3">
                 <div class="card bg-info text-white stats-card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
-                                <h3 id="medium-findings">-</h3>
-                                <p class="mb-0 stats-label">Medium</p>
-                                <small class="stats-trend" id="medium-trend">↗️ +0%</small>
+                                <h3 id="affected-resources">-</h3>
+                                <p class="mb-0 stats-label">Affected Resources</p>
+                                <small class="stats-trend" id="resources-trend">↗️ +0%</small>
                             </div>
                             <div class="align-self-center">
-                                <i class="fas fa-info-circle fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card bg-success text-white stats-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h3 id="active-findings">-</h3>
-                                <p class="mb-0 stats-label">Active</p>
-                                <small class="stats-trend" id="active-trend">↗️ +0%</small>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-check-circle fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card bg-purple text-white stats-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h3 id="new-findings">-</h3>
-                                <p class="mb-0 stats-label">New</p>
-                                <small class="stats-trend" id="new-trend">↗️ +0%</small>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-star fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-2">
-                <div class="card bg-secondary text-white stats-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h3 id="archived-findings">-</h3>
-                                <p class="mb-0 stats-label">Archived</p>
-                                <small class="stats-trend" id="archived-trend">↗️ +0%</small>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-archive fa-2x"></i>
+                                <i class="fas fa-server fa-2x"></i>
                             </div>
                         </div>
                     </div>
@@ -313,52 +265,38 @@
             </div>
         </div>
 
-        <!-- Enhanced Findings Table -->
+        <!-- Security Controls Table -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
-                            <i class="fas fa-table me-2"></i>
-                            Security Hub Findings
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Security Controls
                         </h5>
                         <div class="d-flex align-items-center gap-3">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" id="select-all">
-                                <label class="form-check-label small" for="select-all">Select All</label>
-                            </div>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button class="btn btn-outline-secondary" onclick="bulkExport()" id="bulk-export-btn" disabled>
-                                    <i class="fas fa-download me-1"></i> Bulk Export
-                                </button>
-                                <button class="btn btn-outline-info" onclick="bulkHistory()" id="bulk-history-btn" disabled>
-                                    <i class="fas fa-history me-1"></i> View History
-                                </button>
-                            </div>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="refreshData()">
+                                <i class="fas fa-redo me-1"></i> Refresh
+                            </button>
                         </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover" id="findings-table">
+                            <table class="table table-striped table-hover" id="controls-table">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th width="30">
-                                            <input type="checkbox" class="form-check-input" id="header-checkbox">
-                                        </th>
-                                        <th width="80">ID</th>
-                                        <th>Title & Description</th>
+                                        <th width="120">Control ID</th>
+                                        <th>Title</th>
                                         <th width="100">Severity</th>
-                                        <th width="100">Status</th>
-                                        <th width="120">Product</th>
-                                        <th width="100">Region</th>
-                                        <th width="120">Created</th>
-                                        <th width="100">Workflow</th>
+                                        <th width="150">Affected Resources</th>
+                                        <th width="150">Regions</th>
+                                        <th width="150">Products</th>
                                         <th width="120">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="findings-tbody">
+                                <tbody id="controls-tbody">
                                     <tr>
-                                        <td colspan="10" class="text-center">
+                                        <td colspan="7" class="text-center">
                                             <div class="spinner-border text-primary" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
@@ -367,32 +305,27 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div class="d-flex align-items-center gap-3">
-                                <span id="pagination-info">Showing 0 of 0 findings</span>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="checkbox" id="show-descriptions">
-                                    <label class="form-check-label small" for="show-descriptions">Show Descriptions</label>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <select class="form-select form-select-sm" id="page-size" style="width: auto;">
-                                    <option value="25">25 per page</option>
-                                    <option value="50" selected>50 per page</option>
-                                    <option value="100">100 per page</option>
-                                    <option value="200">200 per page</option>
-                                </select>
-                                <div class="btn-group btn-group-sm" role="group">
-                                    <button class="btn btn-outline-primary" onclick="previousPage()" id="prev-btn" disabled>
-                                        <i class="fas fa-chevron-left"></i> Previous
-                                    </button>
-                                    <button class="btn btn-outline-primary" onclick="nextPage()" id="next-btn" disabled>
-                                        Next <i class="fas fa-chevron-right"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Details Modal -->
+    <div class="modal fade" id="controlModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-shield-alt me-2"></i>Control Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="control-modal-body">
+                    <!-- Content will be loaded here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

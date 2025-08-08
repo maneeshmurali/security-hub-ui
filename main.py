@@ -426,6 +426,149 @@ async def get_stats():
             "last_updated": datetime.utcnow().isoformat()
         }
 
+@app.get("/api/controls")
+async def get_controls():
+    """Get security controls grouped by control ID with affected resource counts"""
+    try:
+        all_findings = data_manager.get_findings(limit=10000)
+        
+        # Group findings by control ID
+        controls = {}
+        
+        for finding in all_findings:
+            # Extract control ID from finding title or ID
+            control_id = _extract_control_id(finding.title or finding.id)
+            
+            if control_id not in controls:
+                controls[control_id] = {
+                    "control_id": control_id,
+                    "title": finding.title or "Unknown Control",
+                    "severity": finding.severity or "UNKNOWN",
+                    "affected_resources": 0,
+                    "findings": [],
+                    "regions": set(),
+                    "products": set()
+                }
+            
+            controls[control_id]["affected_resources"] += 1
+            controls[control_id]["findings"].append({
+                "id": finding.id,
+                "title": finding.title,
+                "severity": finding.severity,
+                "status": finding.status,
+                "region": finding.region,
+                "product_name": finding.product_name,
+                "workflow_status": finding.workflow_status,
+                "created_at": finding.created_at.isoformat() if finding.created_at else None
+            })
+            
+            if finding.region:
+                controls[control_id]["regions"].add(finding.region)
+            if finding.product_name:
+                controls[control_id]["products"].add(finding.product_name)
+        
+        # Convert sets to lists for JSON serialization
+        for control in controls.values():
+            control["regions"] = list(control["regions"])
+            control["products"] = list(control["products"])
+        
+        # Sort by severity (CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL)
+        severity_order = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFORMATIONAL": 4, "UNKNOWN": 5}
+        sorted_controls = sorted(
+            controls.values(), 
+            key=lambda x: (severity_order.get(x["severity"], 5), x["affected_resources"]),
+            reverse=True
+        )
+        
+        return {
+            "controls": sorted_controls,
+            "total_controls": len(sorted_controls),
+            "total_affected_resources": sum(c["affected_resources"] for c in sorted_controls)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting controls: {e}")
+        return {
+            "controls": [],
+            "total_controls": 0,
+            "total_affected_resources": 0
+        }
+
+def _extract_control_id(title: str) -> str:
+    """Extract control ID from finding title"""
+    import re
+    
+    # Common patterns for control IDs
+    patterns = [
+        r'([A-Z]+\.\d+)',  # IAM.1, S3.1, RDS.1, etc.
+        r'([A-Z]+_\d+)',   # IAM_1, S3_1, etc.
+        r'([A-Z]+-\d+)',   # IAM-1, S3-1, etc.
+        r'([A-Z]{2,}\d+)', # IAM1, S31, etc.
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, title)
+        if match:
+            return match.group(1)
+    
+    # If no pattern matches, use first word as control ID
+    words = title.split()
+    if words:
+        return words[0][:10]  # Limit to 10 characters
+    
+    return "UNKNOWN"
+
+@app.get("/api/controls/{control_id}")
+async def get_control_details(control_id: str):
+    """Get detailed information about a specific control and its affected resources"""
+    try:
+        all_findings = data_manager.get_findings(limit=10000)
+        
+        # Find all findings for this control
+        control_findings = []
+        control_info = None
+        
+        for finding in all_findings:
+            finding_control_id = _extract_control_id(finding.title or finding.id)
+            
+            if finding_control_id == control_id:
+                if control_info is None:
+                    control_info = {
+                        "control_id": control_id,
+                        "title": finding.title or "Unknown Control",
+                        "severity": finding.severity or "UNKNOWN",
+                        "description": finding.description or "No description available"
+                    }
+                
+                control_findings.append({
+                    "id": finding.id,
+                    "title": finding.title,
+                    "description": finding.description,
+                    "severity": finding.severity,
+                    "status": finding.status,
+                    "region": finding.region,
+                    "product_name": finding.product_name,
+                    "workflow_status": finding.workflow_status,
+                    "aws_account_id": finding.aws_account_id,
+                    "created_at": finding.created_at.isoformat() if finding.created_at else None,
+                    "updated_at": finding.updated_at.isoformat() if finding.updated_at else None
+                })
+        
+        if not control_info:
+            raise HTTPException(status_code=404, detail="Control not found")
+        
+        return {
+            "control": control_info,
+            "affected_resources": control_findings,
+            "total_affected_resources": len(control_findings)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting control details: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/api/debug/findings")
 async def debug_findings():
     """Debug endpoint to check finding data"""

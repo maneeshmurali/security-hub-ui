@@ -22,7 +22,7 @@ class SecurityHubDashboard {
         await this.loadProducts();
         await this.loadAccounts();
         await this.loadRegions();
-        await this.loadFindings();
+        await this.loadControls();
         await this.updateSchedulerStatus();
         this.setupEventListeners();
         this.setupAutoRefresh();
@@ -31,6 +31,7 @@ class SecurityHubDashboard {
         // Set up periodic updates
         setInterval(() => this.updateSchedulerStatus(), 30000); // Every 30 seconds
         setInterval(() => this.loadStats(), 60000); // Every minute
+        setInterval(() => this.loadControls(), 60000); // Every minute
     }
 
     setupEventListeners() {
@@ -148,6 +149,30 @@ class SecurityHubDashboard {
             this.lastStats = stats;
         } catch (error) {
             console.error('Error loading stats:', error);
+        }
+    }
+
+    async loadControls() {
+        try {
+            const response = await fetch('/api/controls');
+            const data = await response.json();
+            
+            // Update stats with control-based metrics
+            this.updateStatWithTrend('total-controls', data.total_controls, 'total-trend');
+            this.updateStatWithTrend('affected-resources', data.total_affected_resources, 'resources-trend');
+            
+            // Count controls by severity
+            const criticalControls = data.controls.filter(c => c.severity === 'CRITICAL').length;
+            const highControls = data.controls.filter(c => c.severity === 'HIGH').length;
+            
+            this.updateStatWithTrend('critical-controls', criticalControls, 'critical-trend');
+            this.updateStatWithTrend('high-controls', highControls, 'high-trend');
+            
+            // Render controls table
+            this.renderControls(data.controls);
+            
+        } catch (error) {
+            console.error('Error loading controls:', error);
         }
     }
 
@@ -305,6 +330,77 @@ class SecurityHubDashboard {
         }
     }
 
+    renderControls(controls) {
+        const tbody = document.getElementById('controls-tbody');
+        
+        if (!controls || controls.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center text-muted">
+                        <i class="fas fa-info-circle me-2"></i>No security controls found
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        tbody.innerHTML = controls.map(control => `
+            <tr>
+                <td>
+                    <span class="badge bg-primary">${this.escapeHtml(control.control_id)}</span>
+                </td>
+                <td>
+                    <div class="finding-title">${this.escapeHtml(control.title)}</div>
+                </td>
+                <td>
+                    <span class="severity-badge severity-${control.severity?.toLowerCase() || 'unknown'}" 
+                          title="Severity: ${control.severity || 'Unknown'}">
+                        ${control.severity || 'UNKNOWN'}
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-outline-primary btn-sm" onclick="dashboard.viewControlDetails('${control.control_id}')">
+                        <i class="fas fa-server me-1"></i>${control.affected_resources} Resources
+                    </button>
+                </td>
+                <td>
+                    <div class="d-flex flex-wrap gap-1">
+                        ${control.regions.slice(0, 3).map(region => 
+                            `<span class="badge bg-secondary">${this.escapeHtml(region)}</span>`
+                        ).join('')}
+                        ${control.regions.length > 3 ? `<span class="badge bg-light text-dark">+${control.regions.length - 3}</span>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex flex-wrap gap-1">
+                        ${control.products.slice(0, 2).map(product => 
+                            `<span class="badge bg-info">${this.escapeHtml(product)}</span>`
+                        ).join('')}
+                        ${control.products.length > 2 ? `<span class="badge bg-light text-dark">+${control.products.length - 2}</span>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary" onclick="dashboard.viewControlDetails('${control.control_id}')" 
+                                title="View Details" data-bs-toggle="tooltip">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="dashboard.exportControl('${control.control_id}')" 
+                                title="Export" data-bs-toggle="tooltip">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
     renderFindings() {
         console.log('renderFindings() called');
         console.log('Findings to render:', this.findings.length);
@@ -445,6 +541,123 @@ class SecurityHubDashboard {
         } else {
             bulkExportBtn.innerHTML = `<i class="fas fa-download me-1"></i> Bulk Export`;
             bulkHistoryBtn.innerHTML = `<i class="fas fa-history me-1"></i> View History`;
+        }
+    }
+
+    async viewControlDetails(controlId) {
+        try {
+            const response = await fetch(`/api/controls/${encodeURIComponent(controlId)}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            const modalBody = document.getElementById('control-modal-body');
+            modalBody.innerHTML = `
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Control Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Control ID:</strong><br>
+                                        <span class="badge bg-primary">${this.escapeHtml(data.control.control_id)}</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Severity:</strong><br>
+                                        <span class="severity-badge severity-${data.control.severity?.toLowerCase() || 'unknown'}">
+                                            ${data.control.severity || 'UNKNOWN'}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Affected Resources:</strong><br>
+                                        <span class="badge bg-warning">${data.total_affected_resources}</span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Title:</strong><br>
+                                        <span>${this.escapeHtml(data.control.title)}</span>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-12">
+                                        <strong>Description:</strong><br>
+                                        <p class="mt-2">${this.escapeHtml(data.control.description)}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Affected Resources (${data.total_affected_resources})</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Resource ID</th>
+                                                <th>Title</th>
+                                                <th>Severity</th>
+                                                <th>Status</th>
+                                                <th>Region</th>
+                                                <th>Product</th>
+                                                <th>Workflow</th>
+                                                <th>Created</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${data.affected_resources.map(resource => `
+                                                <tr>
+                                                    <td>
+                                                        <small class="text-muted">${this.escapeHtml(resource.id.substring(0, 50))}...</small>
+                                                    </td>
+                                                    <td>${this.escapeHtml(resource.title)}</td>
+                                                    <td>
+                                                        <span class="severity-badge severity-${resource.severity?.toLowerCase() || 'unknown'}">
+                                                            ${resource.severity || 'UNKNOWN'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge status-${resource.status?.toLowerCase() || 'unknown'}">
+                                                            ${resource.status || 'UNKNOWN'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">${this.escapeHtml(resource.region || 'N/A')}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-info">${this.escapeHtml(resource.product_name || 'N/A')}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="workflow-badge workflow-${resource.workflow_status?.toLowerCase() || 'unknown'}">
+                                                            ${resource.workflow_status || 'UNKNOWN'}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <small>${resource.created_at ? new Date(resource.created_at).toLocaleDateString() : 'N/A'}</small>
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('controlModal'));
+            modal.show();
+        } catch (error) {
+            console.error('Error viewing control details:', error);
+            this.showError('Error loading control details');
         }
     }
 
@@ -707,7 +920,7 @@ class SecurityHubDashboard {
     }
 
     refreshData() {
-        this.loadFindings();
+        this.loadControls();
         this.loadStats();
     }
 
