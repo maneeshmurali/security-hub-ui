@@ -253,12 +253,20 @@ class SecurityHubDashboard {
             const severity = document.getElementById('severity-filter').value;
             const status = document.getElementById('status-filter').value;
             const product = document.getElementById('product-filter').value;
+            const workflow = document.getElementById('workflow-filter').value;
+            const region = document.getElementById('region-filter').value;
+            const account = document.getElementById('account-filter').value;
+            const compliance = document.getElementById('compliance-filter').value;
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
 
             if (severity) params.append('severity', severity);
             if (status) params.append('status', status);
             if (product) params.append('product_name', product);
+            if (workflow) params.append('workflow_status', workflow);
+            if (region) params.append('region', region);
+            if (account) params.append('aws_account_id', account);
+            if (compliance) params.append('compliance_status', compliance);
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
 
