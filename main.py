@@ -526,14 +526,8 @@ async def test_version():
 async def test_list_finding_ids():
     """List all finding IDs for debugging"""
     try:
-        findings = data_manager.get_findings(limit=5)
-        finding_ids = [finding.id for finding in findings]
-        return {
-            "total_findings": len(finding_ids),
-            "finding_ids": finding_ids
-        }
+        return {"status": "list-finding-ids-endpoint-working"}
     except Exception as e:
-        logger.error(f"Error listing finding IDs: {e}")
         return {"error": str(e)}
 
 @app.get("/api/test/finding-by-query")
