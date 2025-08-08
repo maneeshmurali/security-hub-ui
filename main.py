@@ -557,6 +557,9 @@ async def test_finding_by_query(finding_id: str = Query(...)):
         finding = data_manager.get_finding_by_id(decoded_finding_id)
         
         if finding:
+            # Also get comments for this finding
+            comments = data_manager.get_finding_comments(decoded_finding_id)
+            
             return {
                 "found": True,
                 "version": "v1.0.0-build-2025-08-08-v2",
@@ -566,7 +569,8 @@ async def test_finding_by_query(finding_id: str = Query(...)):
                     "severity": finding.severity,
                     "status": finding.status,
                     "product_name": finding.product_name
-                }
+                },
+                "comments": comments
             }
         else:
             return {
@@ -577,6 +581,14 @@ async def test_finding_by_query(finding_id: str = Query(...)):
             }
     except Exception as e:
         return {"error": str(e), "version": "v1.0.0-build-2025-08-08-v2"}
+
+@app.get("/api/test/comments-simple")
+async def test_comments_simple():
+    """Simple test for comments functionality"""
+    return {
+        "status": "comments-endpoint-working",
+        "version": "v1.0.0-build-2025-08-08-v2"
+    }
 
 @app.get("/api/test/comments-by-query")
 async def test_comments_by_query(finding_id: str = Query(...)):
@@ -590,6 +602,7 @@ async def test_comments_by_query(finding_id: str = Query(...)):
         
         return {
             "version": "v1.0.0-build-2025-08-08-v2",
+            "finding_id": decoded_finding_id,
             "comments": comments
         }
     except Exception as e:
