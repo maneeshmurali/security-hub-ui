@@ -51,10 +51,7 @@ show_usage() {
     echo ""
     echo "Profiles:"
     echo "  default               Basic production setup"
-    echo "  dev                   Development environment"
 
-    echo "  nginx                 Production with Nginx reverse proxy"
-    echo "  traefik               Production with Traefik reverse proxy"
     echo ""
     echo "Examples:"
     echo "  $0 -r https://github.com/user/security-hub.git"
@@ -278,21 +275,7 @@ deploy_application() {
     print_status "Deploying application with profile: $PROFILE"
     
     # Build and start services
-    case $PROFILE in
-        "dev")
-            docker-compose --profile dev up -d --build
-            ;;
-
-        "nginx")
-            docker-compose --profile nginx up -d --build
-            ;;
-        "traefik")
-            docker-compose --profile traefik up -d --build
-            ;;
-        *)
-            docker-compose up -d --build
-            ;;
-    esac
+    docker-compose up -d --build
     
     print_success "Application deployed successfully"
 }
@@ -331,12 +314,7 @@ verify_deployment() {
     echo "  API Docs: http://$SERVER_IP:8000/docs"
     
 
-        "nginx")
-            echo "  Nginx: http://$SERVER_IP:80"
-            ;;
-        "traefik")
-            echo "  Traefik Dashboard: http://$SERVER_IP:8080"
-            ;;
+
     esac
     
     echo ""
@@ -358,11 +336,7 @@ setup_firewall() {
         
 
         
-        # Allow reverse proxy ports if using nginx/traefik
-        if [ "$PROFILE" = "nginx" ] || [ "$PROFILE" = "traefik" ]; then
-            sudo ufw allow 80/tcp    # HTTP
-            sudo ufw allow 443/tcp   # HTTPS
-        fi
+
         
         # Enable firewall
         echo "y" | sudo ufw enable

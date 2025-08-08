@@ -212,48 +212,18 @@ LOG_LEVEL=INFO
 ENABLE_STRUCTURED_LOGGING=true
 ```
 
-### Step 5: Choose Deployment Profile
+### Step 5: Start the Application
 
-#### Basic Production (Default)
 ```bash
 ./scripts/start.sh start
 # OR
 make start
 ```
+
+**Production Setup:**
 - Application + Redis + SQLite
 - Port 8000
-
-#### Development Environment
-```bash
-./scripts/start.sh start dev
-# OR
-make dev
-```
-- Hot reloading
-- PostgreSQL database
-- Debug mode
-
-#### Production with Nginx Reverse Proxy
-```bash
-./scripts/start.sh start nginx
-# OR
-make nginx
-```
-- Nginx reverse proxy
-- SSL support
-- Security headers
-- Ports 80/443
-
-#### Production with Traefik Reverse Proxy
-```bash
-./scripts/start.sh start traefik
-# OR
-make traefik
-```
-- Traefik reverse proxy
-- Auto SSL with Let's Encrypt
-- Service discovery
-- Ports 80/443
+- Optimized for production use
 
 ### Step 6: Verify Deployment
 

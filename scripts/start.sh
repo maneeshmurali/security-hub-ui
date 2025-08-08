@@ -73,21 +73,8 @@ setup_environment() {
 
 # Function to build and start services
 start_services() {
-    local profile=$1
-    
-    print_status "Building and starting services with profile: $profile"
-    
-    if [ "$profile" = "dev" ]; then
-        docker-compose --profile dev up -d --build
-
-    elif [ "$profile" = "nginx" ]; then
-        docker-compose --profile nginx up -d --build
-    elif [ "$profile" = "traefik" ]; then
-        docker-compose --profile traefik up -d --build
-    else
-        docker-compose up -d --build
-    fi
-    
+    print_status "Building and starting services..."
+    docker-compose up -d --build
     print_success "Services started successfully"
 }
 
@@ -125,14 +112,7 @@ show_status() {
     
 
     
-    # Check if reverse proxy is enabled
-    if docker-compose ps | grep -q nginx; then
-        echo "  Nginx: http://localhost:80"
-    fi
-    
-    if docker-compose ps | grep -q traefik; then
-        echo "  Traefik Dashboard: http://localhost:8080"
-    fi
+
 }
 
 # Function to show logs
@@ -172,7 +152,7 @@ show_help() {
     echo "Usage: $0 [COMMAND] [OPTIONS]"
     echo ""
     echo "Commands:"
-    echo "  start [profile]    Start services (default, dev, monitoring, nginx, traefik)"
+    echo "  start              Start services"
     echo "  stop               Stop all services"
     echo "  restart            Restart all services"
     echo "  status             Show service status and URLs"
@@ -184,25 +164,21 @@ show_help() {
     echo ""
     echo "Profiles:"
     echo "  default            Production setup with basic services"
-    echo "  dev                Development setup with hot reloading"
-    echo "  nginx              Production setup with Nginx reverse proxy"
-    echo "  traefik            Production setup with Traefik reverse proxy"
     echo ""
     echo "Examples:"
     echo "  $0 setup"
     echo "  $0 start"
-    echo "  $0 start dev"
+
     echo "  $0 status"
 }
 
 # Main script logic
 case "${1:-start}" in
     "start")
-        profile=${2:-default}
         check_docker
         check_docker_compose
         setup_environment
-        start_services "$profile"
+        start_services
         check_health
         show_status
         ;;

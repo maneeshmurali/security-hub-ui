@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # Main Security Hub Application
@@ -34,11 +34,7 @@ services:
       start_period: 40s
     depends_on:
       - redis
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.security-hub.rule=Host(`${DOMAIN:-localhost}`)"
-      - "traefik.http.routers.security-hub.entrypoints=web"
-      - "traefik.http.services.security-hub.loadbalancer.server.port=8000"
+
 
   # Redis for caching and session management
   redis:
@@ -58,55 +54,12 @@ services:
       timeout: 10s
       retries: 3
 
-  # Nginx reverse proxy (optional)
-  nginx:
-    image: nginx:alpine
-    container_name: security-hub-nginx
-    restart: unless-stopped
-    ports:
-      - "${NGINX_PORT:-80}:80"
-      - "${NGINX_SSL_PORT:-443}:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - nginx_logs:/var/log/nginx
-    networks:
-      - security-hub-network
-    depends_on:
-      - security-hub-app
-    profiles:
-      - nginx
 
-  # Traefik reverse proxy (alternative to nginx)
-  traefik:
-    image: traefik:v2.10
-    container_name: security-hub-traefik
-    restart: unless-stopped
-    ports:
-      - "${TRAEFIK_PORT:-8080}:8080"
-      - "${TRAEFIK_HTTP_PORT:-80}:80"
-      - "${TRAEFIK_HTTPS_PORT:-443}:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - traefik_certs:/certs
-      - traefik_logs:/var/log/traefik
-    networks:
-      - security-hub-network
-    profiles:
-      - traefik
 
 
 
 volumes:
   redis_data:
-    driver: local
-  nginx_logs:
-    driver: local
-  traefik_certs:
-    driver: local
-  traefik_logs:
     driver: local
 
 networks:

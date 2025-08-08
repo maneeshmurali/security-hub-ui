@@ -22,19 +22,11 @@ start: ## Start services (default profile)
 	@echo "🚀 Starting Security Hub Dashboard..."
 	@./scripts/start.sh start
 
-dev: ## Start development environment
-	@echo "🔧 Starting development environment..."
-	@./scripts/start.sh start dev
 
 
 
-nginx: ## Start with Nginx reverse proxy
-	@echo "🌐 Starting with Nginx reverse proxy..."
-	@./scripts/start.sh start nginx
 
-traefik: ## Start with Traefik reverse proxy
-	@echo "🌐 Starting with Traefik reverse proxy..."
-	@./scripts/start.sh start traefik
+
 
 # Stop and restart
 stop: ## Stop all services
@@ -88,22 +80,14 @@ db-backup: ## Create database backup
 
 
 # SSL certificate management
-ssl-generate: ## Generate self-signed SSL certificates
-	@echo "🔐 Generating self-signed SSL certificates..."
-	@mkdir -p nginx/ssl
-	@openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-		-keyout nginx/ssl/key.pem \
-		-out nginx/ssl/cert.pem \
-		-subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+
 
 # Quick commands
 quick-start: ## Quick start (setup + start)
 	@make setup
 	@make start
 
-quick-dev: ## Quick development start
-	@make setup
-	@make dev
+
 
 
 
@@ -156,8 +140,7 @@ logs-app: ## Show application logs
 logs-redis: ## Show Redis logs
 	@docker-compose logs -f redis
 
-logs-nginx: ## Show Nginx logs
-	@docker-compose logs -f nginx
+
 
 logs-all: ## Show all logs
 	@docker-compose logs -f
