@@ -2,6 +2,7 @@ boto3==1.34.0
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
 # sqlite3 is included with Python standard library
 pydantic==2.5.0
 pydantic-settings==2.1.0

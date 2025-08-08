@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies
 RUN dnf update -y && \
-    dnf install -y python3 python3-pip gcc shadow-utils && \
+    dnf install -y python3 python3-pip gcc shadow-utils postgresql-devel && \
     dnf clean all
 
 # Create app directory

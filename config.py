@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Database settings
-    database_url: str = "sqlite:///security_hub_findings.db"
+    database_url: str = "postgresql://security_hub:security_hub_password@postgres:5432/security_hub"
     
     # AWS Settings
     aws_region: str = "us-east-1"

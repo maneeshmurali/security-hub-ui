@@ -12,7 +12,7 @@ services:
       - "${APP_PORT:-8000}:8000"
     environment:
       - AWS_REGION=${AWS_REGION:-us-east-1}
-      - DATABASE_URL=${DATABASE_URL:-sqlite:///security_hub_findings.db}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://security_hub:security_hub_password@postgres:5432/security_hub}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
       - S3_PREFIX=${S3_PREFIX:-security-hub-findings/}
       - POLLING_INTERVAL_MINUTES=${POLLING_INTERVAL_MINUTES:-30}
@@ -33,8 +33,30 @@ services:
       retries: 3
       start_period: 40s
     depends_on:
+      - postgres
       - redis
 
+
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: security-hub-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=security_hub
+      - POSTGRES_USER=security_hub
+      - POSTGRES_PASSWORD=security_hub_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - security-hub-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U security_hub -d security_hub"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Redis for caching and session management
   redis:
@@ -59,6 +81,8 @@ services:
 
 
 volumes:
+  postgres_data:
+    driver: local
   redis_data:
     driver: local
 
