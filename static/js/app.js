@@ -809,6 +809,13 @@ document.addEventListener('DOMContentLoaded', () => {
     dashboard = new SecurityHubDashboard();
 });
 
+// Global escapeHtml function
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 function applyFilters() {
     dashboard.applyFilters();
 }
