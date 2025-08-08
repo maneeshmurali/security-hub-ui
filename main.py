@@ -534,8 +534,14 @@ async def test_list_finding_ids():
 async def test_finding_by_query(finding_id: str = Query(...)):
     """Test finding lookup using query parameter instead of path parameter"""
     try:
-        # Simple test first
-        return {"received_id": finding_id, "status": "received"}
+        # Decode URL-encoded finding ID
+        decoded_finding_id = urllib.parse.unquote(finding_id)
+        
+        return {
+            "received_id": finding_id,
+            "decoded_id": decoded_finding_id,
+            "status": "decoded"
+        }
     except Exception as e:
         return {"error": str(e)}
 
