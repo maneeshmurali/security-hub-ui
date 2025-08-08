@@ -413,7 +413,7 @@ class SecurityHubDashboard {
             this.currentFindingId = findingId; // Store the current finding ID
             console.log('Fetching finding with ID:', findingId);
             
-            const response = await fetch(`/api/findings/${encodeURIComponent(findingId)}`);
+            const response = await fetch(`/api/findings/${findingId}`);
             console.log('Response status:', response.status);
             
             if (!response.ok) {
@@ -471,7 +471,7 @@ class SecurityHubDashboard {
 
     async viewHistory(findingId) {
         try {
-            const response = await fetch(`/api/findings/${encodeURIComponent(findingId)}/history`);
+            const response = await fetch(`/api/findings/${findingId}/history`);
             const history = await response.json();
             
             const modalBody = document.getElementById('history-modal-body');
@@ -1005,7 +1005,7 @@ function viewComments() {
 
 async function loadComments(findingId) {
     try {
-        const response = await fetch(`/api/findings/${encodeURIComponent(findingId)}/comments`);
+        const response = await fetch(`/api/findings/${findingId}/comments`);
         if (!response.ok) {
             throw new Error('Failed to load comments');
         }
@@ -1065,7 +1065,7 @@ async function addComment() {
     }
     
     try {
-        const response = await fetch(`/api/findings/${encodeURIComponent(dashboard.currentFindingId)}/comments`, {
+        const response = await fetch(`/api/findings/${dashboard.currentFindingId}/comments`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1102,7 +1102,7 @@ async function editComment(commentId) {
     if (!newComment || !newComment.trim()) return;
     
     try {
-        const response = await fetch(`/api/findings/${encodeURIComponent(dashboard.currentFindingId)}/comments/${commentId}`, {
+        const response = await fetch(`/api/findings/${dashboard.currentFindingId}/comments/${commentId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -1131,7 +1131,7 @@ async function deleteComment(commentId) {
     if (!confirm('Are you sure you want to delete this comment?')) return;
     
     try {
-        const response = await fetch(`/api/findings/${encodeURIComponent(dashboard.currentFindingId)}/comments/${commentId}`, {
+        const response = await fetch(`/api/findings/${dashboard.currentFindingId}/comments/${commentId}`, {
             method: 'DELETE'
         });
         

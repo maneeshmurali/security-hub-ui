@@ -151,11 +151,7 @@ async def get_findings(
 @app.get("/api/findings/{finding_id}", response_model=FindingResponse)
 async def get_finding(finding_id: str):
     """Get a specific finding by ID"""
-    # Decode URL-encoded finding ID
-    import urllib.parse
-    decoded_finding_id = urllib.parse.unquote(finding_id)
-    
-    finding = data_manager.get_finding_by_id(decoded_finding_id)
+    finding = data_manager.get_finding_by_id(finding_id)
     if not finding:
         raise HTTPException(status_code=404, detail="Finding not found")
     return finding
@@ -163,11 +159,7 @@ async def get_finding(finding_id: str):
 @app.get("/api/findings/{finding_id}/history", response_model=List[FindingHistoryResponse])
 async def get_finding_history(finding_id: str):
     """Get history for a specific finding"""
-    # Decode URL-encoded finding ID
-    import urllib.parse
-    decoded_finding_id = urllib.parse.unquote(finding_id)
-    
-    history = data_manager.get_finding_history(decoded_finding_id)
+    history = data_manager.get_finding_history(finding_id)
     if not history:
         raise HTTPException(status_code=404, detail="Finding history not found")
     return history
@@ -175,27 +167,19 @@ async def get_finding_history(finding_id: str):
 @app.get("/api/findings/{finding_id}/comments", response_model=List[CommentResponse])
 async def get_finding_comments(finding_id: str):
     """Get comments for a specific finding"""
-    # Decode URL-encoded finding ID
-    import urllib.parse
-    decoded_finding_id = urllib.parse.unquote(finding_id)
-    
-    comments = data_manager.get_finding_comments(decoded_finding_id)
+    comments = data_manager.get_finding_comments(finding_id)
     return comments
 
 @app.post("/api/findings/{finding_id}/comments", response_model=CommentResponse)
 async def add_finding_comment(finding_id: str, comment_request: CommentRequest):
     """Add a comment to a finding"""
-    # Decode URL-encoded finding ID
-    import urllib.parse
-    decoded_finding_id = urllib.parse.unquote(finding_id)
-    
     # Verify finding exists
-    finding = data_manager.get_finding_by_id(decoded_finding_id)
+    finding = data_manager.get_finding_by_id(finding_id)
     if not finding:
         raise HTTPException(status_code=404, detail="Finding not found")
     
     comment = data_manager.add_finding_comment(
-        finding_id=decoded_finding_id,
+        finding_id=finding_id,
         comment=comment_request.comment,
         author=comment_request.author,
         is_internal=comment_request.is_internal
@@ -205,10 +189,6 @@ async def add_finding_comment(finding_id: str, comment_request: CommentRequest):
 @app.put("/api/findings/{finding_id}/comments/{comment_id}", response_model=CommentResponse)
 async def update_finding_comment(finding_id: str, comment_id: int, comment_request: CommentRequest):
     """Update a comment for a finding"""
-    # Decode URL-encoded finding ID
-    import urllib.parse
-    decoded_finding_id = urllib.parse.unquote(finding_id)
-    
     comment = data_manager.update_finding_comment(
         comment_id=comment_id,
         comment=comment_request.comment,
@@ -222,10 +202,6 @@ async def update_finding_comment(finding_id: str, comment_id: int, comment_reque
 @app.delete("/api/findings/{finding_id}/comments/{comment_id}")
 async def delete_finding_comment(finding_id: str, comment_id: int):
     """Delete a comment for a finding"""
-    # Decode URL-encoded finding ID
-    import urllib.parse
-    decoded_finding_id = urllib.parse.unquote(finding_id)
-    
     success = data_manager.delete_finding_comment(comment_id)
     if not success:
         raise HTTPException(status_code=404, detail="Comment not found")
@@ -414,6 +390,44 @@ async def debug_findings():
         }
     except Exception as e:
         logger.error(f"Error in debug endpoint: {e}")
+        return {"error": str(e)}
+
+@app.get("/api/debug/finding/{finding_id}")
+async def debug_specific_finding(finding_id: str):
+    """Debug endpoint to check a specific finding"""
+    try:
+        finding = data_manager.get_finding_by_id(finding_id)
+        if finding:
+            return {
+                "found": True,
+                "finding": {
+                    "id": finding.id,
+                    "title": finding.title,
+                    "severity": finding.severity,
+                    "status": finding.status,
+                    "product_name": finding.product_name
+                }
+            }
+        else:
+            # Let's check if there are any findings with similar IDs
+            all_findings = data_manager.get_findings(limit=1000)
+            similar_findings = []
+            
+            for f in all_findings:
+                if finding_id in f.id or f.id in finding_id:
+                    similar_findings.append({
+                        "id": f.id,
+                        "title": f.title,
+                        "product_name": f.product_name
+                    })
+            
+            return {
+                "found": False,
+                "searched_id": finding_id,
+                "similar_findings": similar_findings[:5]  # Show first 5 similar findings
+            }
+    except Exception as e:
+        logger.error(f"Error in debug specific finding endpoint: {e}")
         return {"error": str(e)}
 
 if __name__ == "__main__":
