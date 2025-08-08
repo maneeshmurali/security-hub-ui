@@ -168,6 +168,10 @@ class DataManager:
                     severity: Optional[str] = None,
                     status: Optional[str] = None,
                     product_name: Optional[str] = None,
+                    workflow_status: Optional[str] = None,
+                    region: Optional[str] = None,
+                    aws_account_id: Optional[str] = None,
+                    compliance_status: Optional[str] = None,
                     start_date: Optional[datetime] = None,
                     end_date: Optional[datetime] = None,
                     limit: int = 100,
@@ -185,6 +189,18 @@ class DataManager:
             
             if product_name:
                 query = query.filter(Finding.product_name == product_name)
+            
+            if workflow_status:
+                query = query.filter(Finding.workflow_status == workflow_status)
+            
+            if region:
+                query = query.filter(Finding.region == region)
+            
+            if aws_account_id:
+                query = query.filter(Finding.aws_account_id == aws_account_id)
+            
+            if compliance_status:
+                query = query.filter(Finding.compliance_status == compliance_status)
             
             if start_date and end_date:
                 query = query.filter(
