@@ -433,6 +433,7 @@ class SecurityHubDashboard {
             }
             
             const finding = result.finding;
+            const comments = result.comments || [];
             
             const modalBody = document.getElementById('finding-modal-body');
             modalBody.innerHTML = `
@@ -464,6 +465,19 @@ class SecurityHubDashboard {
                     <div class="col-12">
                         <h6>Description</h6>
                         <p class="finding-description">${this.escapeHtml(finding.description || 'No description available')}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Comments (${comments.length})</h6>
+                        <div id="finding-comments-list">
+                            ${this.renderCommentsForFinding(comments)}
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-primary btn-sm" onclick="viewComments()">
+                                <i class="fas fa-comments"></i> Manage Comments
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -764,6 +778,27 @@ class SecurityHubDashboard {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    renderCommentsForFinding(comments) {
+        if (comments.length === 0) {
+            return '<p class="text-muted">No comments yet. Click "Manage Comments" to add one.</p>';
+        }
+        
+        return comments.slice(0, 3).map(comment => `
+            <div class="card mb-2 ${comment.is_internal ? 'border-warning' : 'border-primary'}">
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${this.escapeHtml(comment.author)}</strong>
+                            ${comment.is_internal ? '<span class="badge bg-warning ms-2">Internal</span>' : ''}
+                        </div>
+                        <small class="text-muted">${new Date(comment.created_at).toLocaleString()}</small>
+                    </div>
+                    <p class="card-text mb-0 mt-1">${this.escapeHtml(comment.comment)}</p>
+                </div>
+            </div>
+        `).join('') + (comments.length > 3 ? `<p class="text-muted">... and ${comments.length - 3} more comments</p>` : '');
     }
 }
 
