@@ -305,6 +305,14 @@ class SecurityHubDashboard {
     }
 
     renderFindings() {
+        console.log('renderFindings() called');
+        console.log('Findings to render:', this.findings.length);
+        console.log('Sample findings for rendering:', this.findings.slice(0, 3).map(f => ({
+            id: f.id,
+            title: f.title,
+            workflow_status: f.workflow_status
+        })));
+        
         const tbody = document.getElementById('findings-tbody');
         const showDescriptions = document.getElementById('show-descriptions').checked;
         

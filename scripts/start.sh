@@ -126,6 +126,12 @@ stop_services() {
     print_status "Stopping services..."
     docker-compose down
     print_success "Services stopped"
+    
+    print_status "Removing Docker images..."
+    docker rmi $(docker images -q security-hub-app) 2>/dev/null || true
+    docker rmi $(docker images -q postgres:15) 2>/dev/null || true
+    docker rmi $(docker images -q redis:7-alpine) 2>/dev/null || true
+    print_success "Docker images removed"
 }
 
 # Function to restart services
@@ -140,6 +146,15 @@ cleanup() {
     print_status "Cleaning up Docker resources..."
     docker-compose down -v --remove-orphans
     docker system prune -f
+    
+    print_status "Removing all related Docker images..."
+    docker rmi $(docker images -q security-hub-app) 2>/dev/null || true
+    docker rmi $(docker images -q postgres:15) 2>/dev/null || true
+    docker rmi $(docker images -q redis:7-alpine) 2>/dev/null || true
+    
+    print_status "Removing unused Docker images..."
+    docker image prune -f
+    
     print_success "Cleanup completed"
 }
 
@@ -153,12 +168,12 @@ show_help() {
     echo ""
     echo "Commands:"
     echo "  start              Start services"
-    echo "  stop               Stop all services"
+    echo "  stop               Stop all services and remove Docker images"
     echo "  restart            Restart all services"
     echo "  status             Show service status and URLs"
     echo "  logs               Show application logs"
     echo "  health             Check service health"
-    echo "  cleanup            Clean up Docker resources"
+    echo "  cleanup            Clean up Docker resources (containers, volumes, images)"
     echo "  setup              Initial setup (create directories, .env file)"
     echo "  help               Show this help message"
     echo ""
