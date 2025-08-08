@@ -152,7 +152,7 @@ async def get_findings(
 @app.get("/api/findings/{finding_id}", response_model=FindingResponse)
 async def get_finding(finding_id: str):
     """Get a specific finding by ID"""
-    logger.info(f"=== GET /api/findings/{finding_id} called ===")
+    logger.info(f"=== GET /api/findings/{finding_id} called (v1.0.0-build-2025-08-08-v2) ===")
     
     # Decode URL-encoded finding ID
     decoded_finding_id = urllib.parse.unquote(finding_id)
@@ -520,7 +520,23 @@ async def test_simple_debug():
 @app.get("/api/test/version")
 async def test_version():
     """Test version endpoint"""
-    return {"version": "1.0.0", "status": "latest"}
+    return {
+        "version": "1.0.0", 
+        "build": "2025-08-08-v2",
+        "status": "latest",
+        "features": [
+            "URL decoding for finding IDs",
+            "CSPM findings support",
+            "Comments system",
+            "Enhanced debugging"
+        ],
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/api/test/path-param/{test_id}")
+async def test_path_param(test_id: str):
+    """Test path parameter handling"""
+    return {"received_id": test_id, "length": len(test_id)}
 
 @app.get("/api/test/list-finding-ids")
 async def test_list_finding_ids():
@@ -543,6 +559,7 @@ async def test_finding_by_query(finding_id: str = Query(...)):
         if finding:
             return {
                 "found": True,
+                "version": "v1.0.0-build-2025-08-08-v2",
                 "finding": {
                     "id": finding.id,
                     "title": finding.title,
@@ -554,11 +571,12 @@ async def test_finding_by_query(finding_id: str = Query(...)):
         else:
             return {
                 "found": False,
+                "version": "v1.0.0-build-2025-08-08-v2",
                 "searched_id": decoded_finding_id,
                 "status": "not_found"
             }
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": str(e), "version": "v1.0.0-build-2025-08-08-v2"}
 
 if __name__ == "__main__":
     import uvicorn
