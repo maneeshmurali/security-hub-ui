@@ -418,6 +418,9 @@ async def debug_specific_finding(finding_id: str):
     try:
         # Decode URL-encoded finding ID
         decoded_finding_id = urllib.parse.unquote(finding_id)
+        logger.info(f"Debug: Original ID: {finding_id}")
+        logger.info(f"Debug: Decoded ID: {decoded_finding_id}")
+        
         finding = data_manager.get_finding_by_id(decoded_finding_id)
         if finding:
             return {
@@ -446,11 +449,22 @@ async def debug_specific_finding(finding_id: str):
             return {
                 "found": False,
                 "searched_id": finding_id,
+                "decoded_id": decoded_finding_id,
                 "similar_findings": similar_findings[:5]  # Show first 5 similar findings
             }
     except Exception as e:
         logger.error(f"Error in debug specific finding endpoint: {e}")
         return {"error": str(e)}
+
+@app.get("/api/test/url-decode/{test_id}")
+async def test_url_decode(test_id: str):
+    """Test endpoint to verify URL decoding works"""
+    decoded = urllib.parse.unquote(test_id)
+    return {
+        "original": test_id,
+        "decoded": decoded,
+        "decoding_works": test_id != decoded
+    }
 
 if __name__ == "__main__":
     import uvicorn
