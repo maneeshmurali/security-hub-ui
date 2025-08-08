@@ -240,6 +240,33 @@ async def manual_fetch():
         logger.error(f"Error in manual fetch: {e}")
         raise HTTPException(status_code=500, detail="Error triggering manual fetch")
 
+@app.post("/api/findings/fetch-cspm")
+async def manual_fetch_cspm():
+    """Manually trigger a CSPM findings fetch"""
+    try:
+        logger.info("Manual CSPM findings fetch triggered")
+        
+        # Get CSPM findings specifically
+        cspm_findings = scheduler.client.get_cspm_findings()
+        
+        if cspm_findings:
+            # Store findings in database
+            processed_count = scheduler.data_manager.store_findings(cspm_findings)
+            return {
+                "message": "CSPM fetch completed successfully",
+                "findings_count": len(cspm_findings),
+                "processed_count": processed_count
+            }
+        else:
+            return {
+                "message": "No CSPM findings found",
+                "findings_count": 0,
+                "processed_count": 0
+            }
+    except Exception as e:
+        logger.error(f"Error in manual CSPM fetch: {e}")
+        raise HTTPException(status_code=500, detail="Failed to trigger CSPM fetch")
+
 @app.get("/api/scheduler/status", response_model=SchedulerStatusResponse)
 async def get_scheduler_status():
     """Get scheduler status"""
@@ -478,6 +505,11 @@ async def test_simple():
 async def test_health():
     """Health check endpoint"""
     return {"status": "healthy", "service": "security-hub-api"}
+
+@app.get("/api/test/ping")
+async def test_ping():
+    """Simple ping endpoint"""
+    return {"message": "pong"}
 
 @app.get("/api/test/finding-by-query")
 async def test_finding_by_query(finding_id: str = Query(...)):

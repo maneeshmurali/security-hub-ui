@@ -54,8 +54,23 @@ class SecurityHubScheduler:
             logger.info("Starting scheduled Security Hub findings fetch")
             start_time = datetime.utcnow()
             
-            # Fetch all findings
-            findings = self.client.get_all_findings()
+            # Fetch all findings (including CSPM)
+            all_findings = self.client.get_all_findings()
+            
+            # Also fetch CSPM findings specifically
+            cspm_findings = self.client.get_cspm_findings()
+            
+            # Combine all findings
+            findings = all_findings + cspm_findings
+            
+            # Remove duplicates based on finding ID
+            unique_findings = {}
+            for finding in findings:
+                finding_id = finding.get('Id')
+                if finding_id:
+                    unique_findings[finding_id] = finding
+            
+            findings = list(unique_findings.values())
             
             if findings:
                 # Store findings in database
@@ -79,6 +94,7 @@ class SecurityHubScheduler:
                 duration = (end_time - start_time).total_seconds()
                 
                 logger.info(f"Successfully processed {processed_count} findings in {duration:.2f} seconds")
+                logger.info(f"Total findings: {len(findings)}, CSPM findings: {len(cspm_findings)}")
             else:
                 logger.warning("No findings retrieved from Security Hub")
                 

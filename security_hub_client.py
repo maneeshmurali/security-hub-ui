@@ -35,11 +35,10 @@ class SecurityHubClient:
         """
         all_findings = []
         
-        # Default filters if none provided
+        # Default filters if none provided - fetch all active findings regardless of workflow status
         if filters is None:
             filters = {
-                'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
-                'WorkflowStatus': [{'Value': 'NEW', 'Comparison': 'EQUALS'}]
+                'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}]
             }
         
         try:
@@ -107,6 +106,18 @@ class SecurityHubClient:
     def get_all_findings(self) -> List[Dict[str, Any]]:
         """Get all findings without filters"""
         return self.get_findings()
+    
+    def get_cspm_findings(self) -> List[Dict[str, Any]]:
+        """Get Security Hub CSPM findings specifically"""
+        filters = {
+            'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
+            'ProductName': [
+                {'Value': 'Security Hub', 'Comparison': 'EQUALS'},
+                {'Value': 'AWS Foundational Security Best Practices', 'Comparison': 'EQUALS'},
+                {'Value': 'AWS Security Hub', 'Comparison': 'EQUALS'}
+            ]
+        }
+        return self.get_findings(filters)
     
     def get_finding_by_id(self, finding_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific finding by ID"""
