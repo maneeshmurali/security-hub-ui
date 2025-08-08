@@ -537,11 +537,26 @@ async def test_finding_by_query(finding_id: str = Query(...)):
         # Decode URL-encoded finding ID
         decoded_finding_id = urllib.parse.unquote(finding_id)
         
-        return {
-            "received_id": finding_id,
-            "decoded_id": decoded_finding_id,
-            "status": "decoded"
-        }
+        # Look up the finding in the database
+        finding = data_manager.get_finding_by_id(decoded_finding_id)
+        
+        if finding:
+            return {
+                "found": True,
+                "finding": {
+                    "id": finding.id,
+                    "title": finding.title,
+                    "severity": finding.severity,
+                    "status": finding.status,
+                    "product_name": finding.product_name
+                }
+            }
+        else:
+            return {
+                "found": False,
+                "searched_id": decoded_finding_id,
+                "status": "not_found"
+            }
     except Exception as e:
         return {"error": str(e)}
 
