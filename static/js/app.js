@@ -689,7 +689,11 @@ class SecurityHubDashboard {
     }
 
     applyFilters() {
+        console.log('Dashboard.applyFilters() called');
+        console.log('Current page before reset:', this.currentPage);
         this.currentPage = 0;
+        console.log('Current page after reset:', this.currentPage);
+        console.log('Calling loadFindings()');
         this.loadFindings();
     }
 
@@ -856,7 +860,14 @@ function escapeHtml(text) {
 }
 
 function applyFilters() {
-    dashboard.applyFilters();
+    console.log('Global applyFilters() called');
+    console.log('Dashboard object:', dashboard);
+    if (dashboard && typeof dashboard.applyFilters === 'function') {
+        console.log('Calling dashboard.applyFilters()');
+        dashboard.applyFilters();
+    } else {
+        console.error('Dashboard object not found or applyFilters method not available');
+    }
 }
 
 function manualFetch() {
