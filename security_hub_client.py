@@ -56,7 +56,7 @@ class SecurityHubClient:
         """
         all_findings = []
         
-        # Default filters if none provided - fetch only HIGH, CRITICAL, MEDIUM with FAILED compliance status
+        # Default filters if none provided - fetch only HIGH, CRITICAL, MEDIUM (all compliance statuses)
         if filters is None:
             filters = {
                 'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
@@ -64,8 +64,8 @@ class SecurityHubClient:
                     {'Value': 'CRITICAL', 'Comparison': 'EQUALS'},
                     {'Value': 'HIGH', 'Comparison': 'EQUALS'},
                     {'Value': 'MEDIUM', 'Comparison': 'EQUALS'}
-                ],
-                'ComplianceStatus': [{'Value': 'FAILED', 'Comparison': 'EQUALS'}]
+                ]
+                # Removed ComplianceStatus filter to include all compliance statuses
             }
         
         # Check if multi-region processing is enabled (can be disabled via environment variable)
@@ -213,7 +213,7 @@ class SecurityHubClient:
         return self.get_findings()
     
     def get_cspm_findings(self) -> List[Dict[str, Any]]:
-        """Get Security Hub CSPM findings specifically with HIGH, CRITICAL, MEDIUM with FAILED compliance status"""
+        """Get Security Hub CSPM findings specifically with HIGH, CRITICAL, MEDIUM (all compliance statuses)"""
         filters = {
             'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
             'ProductName': [
@@ -225,8 +225,8 @@ class SecurityHubClient:
                 {'Value': 'CRITICAL', 'Comparison': 'EQUALS'},
                 {'Value': 'HIGH', 'Comparison': 'EQUALS'},
                 {'Value': 'MEDIUM', 'Comparison': 'EQUALS'}
-            ],
-            'ComplianceStatus': [{'Value': 'FAILED', 'Comparison': 'EQUALS'}]
+            ]
+            # Removed ComplianceStatus filter to include all compliance statuses
         }
         return self.get_findings(filters)
     

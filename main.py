@@ -748,16 +748,17 @@ async def test_version():
     """Test version endpoint"""
     return {
         "version": "1.0.0", 
-        "build": "2025-08-08-v6",
+        "build": "2025-08-08-v8",
         "status": "latest",
         "features": [
             "URL decoding for finding IDs",
             "CSPM findings support",
-            "Comments system",
+            "Enhanced comments system (findings + controls)",
             "Enhanced debugging",
             "24-hour refresh interval",
             "Multi-region batch processing",
-            "Critical findings focus (HIGH, CRITICAL, MEDIUM - FAILED compliance only)"
+            "Critical findings focus (HIGH, CRITICAL, MEDIUM - all compliance statuses)",
+            "Production-ready fixes"
         ],
         "timestamp": datetime.utcnow().isoformat()
     }

@@ -2,13 +2,13 @@
 
 ## 📖 What is this?
 
-This is a **Security Monitoring Dashboard** that automatically collects and displays **critical security issues** (called "findings") from your AWS account. Think of it as a **security alarm system** that focuses on **HIGH, CRITICAL, and MEDIUM** severity findings with **FAILED** compliance status to help you prioritize the most important security issues.
+This is a **Security Monitoring Dashboard** that automatically collects and displays **critical security issues** (called "findings") from your AWS account. Think of it as a **security alarm system** that focuses on **HIGH, CRITICAL, and MEDIUM** severity findings (all compliance statuses) to help you prioritize the most important security issues.
 
 ### 🎯 What does it do?
 
 - **🔍 Automatically scans** your AWS account for security problems **across all regions**
 - **📊 Displays findings** in an easy-to-read dashboard
-- **💬 Allows you to add notes** to each security issue
+- **💬 Allows you to add notes** to each security issue and control
 - **📈 Tracks changes** over time to see if problems are getting better or worse
 - **📋 Lets you filter and search** through security issues
 - **📤 Exports data** for reports and analysis
@@ -19,7 +19,7 @@ This is a **Security Monitoring Dashboard** that automatically collects and disp
 ### 1. **Data Collection** 📥
 - The application connects to AWS Security Hub (AWS's security monitoring service)
 - It automatically discovers all available AWS regions in your account
-- It checks for **HIGH, CRITICAL, and MEDIUM** severity findings with **FAILED** compliance status every 24 hours **across all regions** in efficient batches
+- It checks for **HIGH, CRITICAL, and MEDIUM** severity findings (all compliance statuses) every 24 hours **across all regions** in efficient batches
 - It collects information like:
   - What the security issue is
   - How serious it is (Critical, High, Medium, Low)
@@ -38,7 +38,7 @@ This is a **Security Monitoring Dashboard** that automatically collects and disp
 - A user-friendly web interface shows all the data
 - You can filter by severity, status, region, etc.
 - Click on any finding to see detailed information
-- Add comments and notes to track your progress
+- Add comments and notes to track your progress (both for individual findings and entire controls)
 
 ## 🚀 Quick Start
 

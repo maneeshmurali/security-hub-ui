@@ -593,8 +593,13 @@ class SecurityHubDashboard {
                 <div class="row">
                     <div class="col-md-12">
                         <div class="card mb-3">
-                            <div class="card-header">
+                            <div class="card-header d-flex justify-content-between align-items-center">
                                 <h6 class="mb-0">Control Information</h6>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-outline-success btn-sm" onclick="viewControlComments('${controlId}')">
+                                        <i class="fas fa-comments me-1"></i>Comments
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="row">
@@ -643,6 +648,7 @@ class SecurityHubDashboard {
                                                 <th class="resizable-column" data-column="product" title="Drag to resize column">Product <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
                                                 <th class="resizable-column" data-column="workflow" title="Drag to resize column">Workflow <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
                                                 <th class="resizable-column" data-column="created" title="Drag to resize column">Created <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
+                                                <th class="resizable-column" data-column="actions" title="Drag to resize column">Actions <i class="fas fa-grip-lines-vertical text-muted ms-1" style="font-size: 0.7em;"></i></th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -675,6 +681,16 @@ class SecurityHubDashboard {
                                                     </td>
                                                     <td>
                                                         <small>${resource.created_at ? new Date(resource.created_at).toLocaleDateString() : 'N/A'}</small>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group btn-group-sm" role="group">
+                                                            <button class="btn btn-outline-primary btn-sm" onclick="viewFinding('${resource.id}')" title="View Details">
+                                                                <i class="fas fa-eye"></i>
+                                                            </button>
+                                                            <button class="btn btn-outline-success btn-sm" onclick="viewComments()" title="View Comments">
+                                                                <i class="fas fa-comments"></i>
+                                                            </button>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             `).join('')}
@@ -1552,6 +1568,19 @@ function viewComments() {
     modal.show();
 }
 
+function viewControlComments(controlId) {
+    // Store the current control ID for comment operations
+    window.currentControlId = controlId;
+    dashboard.currentControlId = controlId;
+    
+    // Load comments for the control (we'll show comments for all findings in this control)
+    loadControlComments(controlId);
+    
+    // Show the comments modal
+    const modal = new bootstrap.Modal(document.getElementById('commentsModal'));
+    modal.show();
+}
+
 async function loadComments(findingId) {
     try {
         // Use query parameter approach instead of path parameter
@@ -1565,6 +1594,50 @@ async function loadComments(findingId) {
     } catch (error) {
         console.error('Error loading comments:', error);
         dashboard.showError('Failed to load comments');
+    }
+}
+
+async function loadControlComments(controlId) {
+    try {
+        // Get all findings for this control first
+        const response = await fetch(`/api/controls/${encodeURIComponent(controlId)}`);
+        if (!response.ok) {
+            throw new Error('Failed to load control details');
+        }
+        
+        const controlData = await response.json();
+        
+        // Collect all comments from all findings in this control
+        let allComments = [];
+        
+        for (const finding of controlData.affected_resources) {
+            try {
+                const commentsResponse = await fetch(`/api/test/comments-by-query?finding_id=${encodeURIComponent(finding.id)}`);
+                if (commentsResponse.ok) {
+                    const commentsResult = await commentsResponse.json();
+                    const comments = commentsResult.comments || [];
+                    
+                    // Add finding context to each comment
+                    const commentsWithContext = comments.map(comment => ({
+                        ...comment,
+                        finding_title: finding.title,
+                        finding_id: finding.id
+                    }));
+                    
+                    allComments.push(...commentsWithContext);
+                }
+            } catch (error) {
+                console.warn(`Failed to load comments for finding ${finding.id}:`, error);
+            }
+        }
+        
+        // Sort comments by creation date (newest first)
+        allComments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        
+        renderControlComments(allComments, controlData.control);
+    } catch (error) {
+        console.error('Error loading control comments:', error);
+        dashboard.showError('Failed to load control comments');
     }
 }
 
@@ -1600,6 +1673,77 @@ function renderComments(comments) {
     `).join('');
 }
 
+function renderControlComments(comments, control) {
+    const commentsList = document.getElementById('comments-list');
+    
+    if (comments.length === 0) {
+        commentsList.innerHTML = `
+            <div class="alert alert-info">
+                <h6><i class="fas fa-info-circle me-2"></i>Control: ${escapeHtml(control.title)}</h6>
+                <p class="mb-0">No comments yet for this control. Comments will appear here when added to any finding within this control.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Group comments by finding
+    const commentsByFinding = {};
+    comments.forEach(comment => {
+        if (!commentsByFinding[comment.finding_id]) {
+            commentsByFinding[comment.finding_id] = [];
+        }
+        commentsByFinding[comment.finding_id].push(comment);
+    });
+    
+    let html = `
+        <div class="alert alert-info mb-3">
+            <h6><i class="fas fa-shield-alt me-2"></i>Control: ${escapeHtml(control.title)}</h6>
+            <p class="mb-0">Showing comments from all findings in this control (${comments.length} total comments)</p>
+        </div>
+    `;
+    
+    // Render comments grouped by finding
+    Object.entries(commentsByFinding).forEach(([findingId, findingComments]) => {
+        const firstComment = findingComments[0];
+        html += `
+            <div class="card mb-3 border-secondary">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="fas fa-search me-2"></i>Finding: ${escapeHtml(firstComment.finding_title)}
+                    </h6>
+                    <small class="text-muted">${findingComments.length} comment(s)</small>
+                </div>
+                <div class="card-body">
+                    ${findingComments.map(comment => `
+                        <div class="card mb-2 ${comment.is_internal ? 'border-warning' : 'border-primary'}">
+                            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                                <div>
+                                    <strong>${escapeHtml(comment.author)}</strong>
+                                    ${comment.is_internal ? '<span class="badge bg-warning ms-2">Internal</span>' : ''}
+                                </div>
+                                <small class="text-muted">${new Date(comment.created_at).toLocaleString()}</small>
+                            </div>
+                            <div class="card-body py-2">
+                                <p class="card-text mb-2">${escapeHtml(comment.comment)}</p>
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="editComment(${comment.id})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteComment(${comment.id})">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    });
+    
+    commentsList.innerHTML = html;
+}
+
 async function addComment() {
     const commentText = document.getElementById('new-comment').value.trim();
     const isInternal = document.getElementById('internal-comment').checked;
@@ -1609,13 +1753,21 @@ async function addComment() {
         return;
     }
     
-    if (!dashboard.currentFindingId) {
-        dashboard.showError('No finding selected');
+    // Check if we're in control comments mode or finding comments mode
+    if (dashboard.currentControlId) {
+        // Control comments mode - we need to select a specific finding to add the comment to
+        await addControlComment(commentText, isInternal);
+    } else if (dashboard.currentFindingId) {
+        // Finding comments mode
+        await addFindingComment(commentText, isInternal);
+    } else {
+        dashboard.showError('No finding or control selected');
         return;
     }
-    
+}
+
+async function addFindingComment(commentText, isInternal) {
     try {
-        // Use query parameter approach for adding comments
         const params = new URLSearchParams({
             finding_id: encodeURIComponent(dashboard.currentFindingId),
             comment: commentText,
@@ -1639,14 +1791,68 @@ async function addComment() {
             document.getElementById('new-comment').value = '';
             document.getElementById('internal-comment').checked = false;
             
-            // Reload comments by refreshing the finding details
-            await dashboard.viewFinding(dashboard.currentFindingId);
+            // Reload comments
+            loadComments(dashboard.currentFindingId);
         } else {
             throw new Error(result.error || 'Failed to add comment');
         }
         
     } catch (error) {
         console.error('Error adding comment:', error);
+        dashboard.showError('Failed to add comment');
+    }
+}
+
+async function addControlComment(commentText, isInternal) {
+    try {
+        // For control comments, we need to select a specific finding
+        // For now, we'll add the comment to the first finding in the control
+        const response = await fetch(`/api/controls/${encodeURIComponent(dashboard.currentControlId)}`);
+        if (!response.ok) {
+            throw new Error('Failed to load control details');
+        }
+        
+        const controlData = await response.json();
+        
+        if (controlData.affected_resources.length === 0) {
+            dashboard.showError('No findings available in this control to add comments to');
+            return;
+        }
+        
+        // Use the first finding in the control
+        const firstFinding = controlData.affected_resources[0];
+        
+        const params = new URLSearchParams({
+            finding_id: encodeURIComponent(firstFinding.id),
+            comment: commentText,
+            author: 'User',
+            is_internal: isInternal
+        });
+        
+        const addResponse = await fetch(`/api/test/comments-add?${params}`, {
+            method: 'POST'
+        });
+        
+        if (!addResponse.ok) {
+            throw new Error('Failed to add comment');
+        }
+        
+        const result = await addResponse.json();
+        if (result.success) {
+            dashboard.showSuccess(`Comment added to finding: ${firstFinding.title.substring(0, 50)}...`);
+            
+            // Clear the form
+            document.getElementById('new-comment').value = '';
+            document.getElementById('internal-comment').checked = false;
+            
+            // Reload control comments
+            loadControlComments(dashboard.currentControlId);
+        } else {
+            throw new Error(result.error || 'Failed to add comment');
+        }
+        
+    } catch (error) {
+        console.error('Error adding control comment:', error);
         dashboard.showError('Failed to add comment');
     }
 }
