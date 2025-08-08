@@ -250,7 +250,6 @@ async def manual_fetch():
         import concurrent.futures
         
         def run_fetch():
-            scheduler = get_scheduler()
             return scheduler.run_manual_fetch()
         
         # Run with 5-minute timeout

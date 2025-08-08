@@ -28,6 +28,9 @@ class SecurityHubDashboard {
         this.setupAutoRefresh();
         this.loadFilterPresets();
         
+        // Initialize resizable columns
+        this.initResizableColumns();
+        
         // Set up periodic updates
         setInterval(() => this.updateSchedulerStatus(), 30000); // Every 30 seconds
         setInterval(() => this.loadStats(), 60000); // Every minute
@@ -1077,6 +1080,168 @@ class SecurityHubDashboard {
             </div>
         `).join('') + (comments.length > 3 ? `<p class="text-muted">... and ${comments.length - 3} more comments</p>` : '');
     }
+
+    initResizableColumns() {
+        const tables = document.querySelectorAll('table');
+        
+        tables.forEach(table => {
+            const headers = table.querySelectorAll('th.resizable-column');
+            
+            headers.forEach(header => {
+                let isResizing = false;
+                let startX, startWidth;
+                
+                const handleMouseDown = (e) => {
+                    isResizing = true;
+                    startX = e.pageX;
+                    startWidth = header.offsetWidth;
+                    
+                    header.classList.add('resizing');
+                    document.body.style.cursor = 'col-resize';
+                    document.body.style.userSelect = 'none';
+                    
+                    e.preventDefault();
+                };
+                
+                const handleMouseMove = (e) => {
+                    if (!isResizing) return;
+                    
+                    const width = startWidth + (e.pageX - startX);
+                    const minWidth = 50; // Minimum column width
+                    
+                    if (width >= minWidth) {
+                        header.style.width = width + 'px';
+                        header.style.minWidth = width + 'px';
+                        
+                        // Update all cells in this column
+                        const columnIndex = Array.from(header.parentElement.children).indexOf(header);
+                        const rows = table.querySelectorAll('tbody tr');
+                        
+                        rows.forEach(row => {
+                            const cell = row.children[columnIndex];
+                            if (cell) {
+                                cell.style.width = width + 'px';
+                                cell.style.minWidth = width + 'px';
+                            }
+                        });
+                    }
+                };
+                
+                const handleMouseUp = () => {
+                    if (isResizing) {
+                        isResizing = false;
+                        header.classList.remove('resizing');
+                        document.body.style.cursor = '';
+                        document.body.style.userSelect = '';
+                        
+                        // Save column widths to localStorage
+                        this.saveColumnWidths(table);
+                    }
+                };
+                
+                header.addEventListener('mousedown', handleMouseDown);
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            });
+        });
+        
+        // Load saved column widths
+        this.loadColumnWidths();
+    }
+    
+    saveColumnWidths(table) {
+        const tableId = table.id;
+        const headers = table.querySelectorAll('th.resizable-column');
+        const widths = {};
+        
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            if (columnName) {
+                widths[columnName] = header.offsetWidth;
+            }
+        });
+        
+        try {
+            const savedWidths = JSON.parse(localStorage.getItem('tableColumnWidths') || '{}');
+            savedWidths[tableId] = widths;
+            localStorage.setItem('tableColumnWidths', JSON.stringify(savedWidths));
+        } catch (error) {
+            console.error('Error saving column widths:', error);
+        }
+    }
+    
+    loadColumnWidths() {
+        try {
+            const savedWidths = JSON.parse(localStorage.getItem('tableColumnWidths') || '{}');
+            
+            Object.keys(savedWidths).forEach(tableId => {
+                const table = document.getElementById(tableId);
+                if (table) {
+                    const widths = savedWidths[tableId];
+                    
+                    Object.keys(widths).forEach(columnName => {
+                        const header = table.querySelector(`th[data-column="${columnName}"]`);
+                        if (header) {
+                            const width = widths[columnName];
+                            header.style.width = width + 'px';
+                            header.style.minWidth = width + 'px';
+                            
+                            // Update all cells in this column
+                            const columnIndex = Array.from(header.parentElement.children).indexOf(header);
+                            const rows = table.querySelectorAll('tbody tr');
+                            
+                            rows.forEach(row => {
+                                const cell = row.children[columnIndex];
+                                if (cell) {
+                                    cell.style.width = width + 'px';
+                                    cell.style.minWidth = width + 'px';
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Error loading column widths:', error);
+        }
+    }
+    
+    resetColumnWidths() {
+        try {
+            // Clear saved widths from localStorage
+            localStorage.removeItem('tableColumnWidths');
+            
+            // Reset all resizable columns to their default widths
+            const tables = document.querySelectorAll('table');
+            
+            tables.forEach(table => {
+                const headers = table.querySelectorAll('th.resizable-column');
+                
+                headers.forEach(header => {
+                    // Remove custom width styles
+                    header.style.width = '';
+                    header.style.minWidth = '';
+                    
+                    // Update all cells in this column
+                    const columnIndex = Array.from(header.parentElement.children).indexOf(header);
+                    const rows = table.querySelectorAll('tbody tr');
+                    
+                    rows.forEach(row => {
+                        const cell = row.children[columnIndex];
+                        if (cell) {
+                            cell.style.width = '';
+                            cell.style.minWidth = '';
+                        }
+                    });
+                });
+            });
+            
+            this.showSuccess('Column widths reset successfully');
+        } catch (error) {
+            console.error('Error resetting column widths:', error);
+            this.showError('Failed to reset column widths');
+        }
+    }
 }
 
 // Global functions for onclick handlers
@@ -1118,6 +1283,16 @@ function exportJSON() {
 
 function refreshData() {
     dashboard.refreshData();
+}
+
+function resetColumnWidths() {
+    if (dashboard && typeof dashboard.resetColumnWidths === 'function') {
+        dashboard.resetColumnWidths();
+    } else {
+        // Fallback: clear localStorage and reload page
+        localStorage.removeItem('tableColumnWidths');
+        location.reload();
+    }
 }
 
 function previousPage() {

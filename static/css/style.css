@@ -38,6 +38,71 @@ body {
     background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%) !important;
 }
 
+/* Resizable columns */
+.resizable-column {
+    position: relative;
+    cursor: col-resize;
+    user-select: none;
+}
+
+.resizable-column::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 4px;
+    height: 100%;
+    background: transparent;
+    cursor: col-resize;
+    transition: background-color 0.2s;
+}
+
+.resizable-column:hover::after {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.resizable-column.resizing::after {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Resize handle */
+.resize-handle {
+    position: absolute;
+    top: 0;
+    right: -2px;
+    width: 4px;
+    height: 100%;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+}
+
+.resize-handle:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.resize-handle.active {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Table wrapper for resizable tables */
+.table-resizable {
+    overflow-x: auto;
+    position: relative;
+}
+
+.table-resizable table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.table-resizable th {
+    position: relative;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .stats-card::before {
     content: '';
     position: absolute;
