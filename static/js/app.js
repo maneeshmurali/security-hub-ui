@@ -246,7 +246,8 @@ class SecurityHubDashboard {
             
             const params = new URLSearchParams({
                 limit: this.pageSize,
-                offset: this.currentPage * this.pageSize
+                offset: this.currentPage * this.pageSize,
+                _t: Date.now() // Cache busting parameter
             });
 
             // Add filters
@@ -270,8 +271,30 @@ class SecurityHubDashboard {
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
 
+            // Debug: Log the filters being applied
+            console.log('Applying filters:', {
+                severity,
+                status,
+                product,
+                workflow,
+                region,
+                account,
+                compliance,
+                startDate,
+                endDate
+            });
+            console.log('API URL:', `/api/findings?${params}`);
+
             const response = await fetch(`/api/findings?${params}`);
             this.findings = await response.json();
+            
+            // Debug: Log the received data
+            console.log('Received findings count:', this.findings.length);
+            console.log('Sample findings:', this.findings.slice(0, 3).map(f => ({
+                id: f.id,
+                title: f.title,
+                workflow_status: f.workflow_status
+            })));
             
             this.renderFindings();
             this.updatePagination();
