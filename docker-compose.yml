@@ -12,7 +12,7 @@ services:
       - "${APP_PORT:-8000}:8000"
     environment:
       - AWS_REGION=${AWS_REGION:-us-east-1}
-      - DATABASE_URL=${DATABASE_URL:-sqlite:///./data/security_hub_findings.db}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:////app/data/security_hub_findings.db}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
       - S3_PREFIX=${S3_PREFIX:-security-hub-findings/}
       - POLLING_INTERVAL_MINUTES=${POLLING_INTERVAL_MINUTES:-30}

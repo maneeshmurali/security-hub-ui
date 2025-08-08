@@ -23,7 +23,8 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create necessary directories
-RUN mkdir -p /app/data /app/logs
+RUN mkdir -p /app/data /app/logs /app/config && \
+    chmod 755 /app/data /app/logs /app/config
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \
