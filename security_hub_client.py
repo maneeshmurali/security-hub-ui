@@ -10,8 +10,28 @@ logger = logging.getLogger(__name__)
 
 class SecurityHubClient:
     def __init__(self):
-        self.client = boto3.client('securityhub', region_name=settings.aws_region)
+        self.default_region = settings.aws_region
         self.account_id = self._get_account_id()
+        self._available_regions = None
+    
+    def _get_available_regions(self) -> List[str]:
+        """Get list of all available AWS regions"""
+        if self._available_regions is None:
+            try:
+                ec2_client = boto3.client('ec2', region_name=self.default_region)
+                regions = ec2_client.describe_regions()
+                self._available_regions = [region['RegionName'] for region in regions['Regions']]
+                logger.info(f"Found {len(self._available_regions)} available regions")
+            except Exception as e:
+                logger.error(f"Failed to get available regions: {e}")
+                # Fallback to common regions
+                self._available_regions = [
+                    'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2',
+                    'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-central-1',
+                    'ap-southeast-1', 'ap-southeast-2', 'ap-northeast-1', 'ap-northeast-2',
+                    'sa-east-1', 'ca-central-1', 'ap-south-1', 'eu-north-1'
+                ]
+        return self._available_regions
     
     def _get_account_id(self) -> str:
         """Get the current AWS account ID"""
@@ -25,7 +45,7 @@ class SecurityHubClient:
     
     def get_findings(self, filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
-        Fetch all Security Hub findings with optional filters
+        Fetch all Security Hub findings with optional filters from all regions
         
         Args:
             filters: Optional filters to apply to the findings query
@@ -41,34 +61,43 @@ class SecurityHubClient:
                 'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}]
             }
         
-        try:
-            paginator = self.client.get_paginator('get_findings')
-            
-            for page in paginator.paginate(Filters=filters):
-                findings = page.get('Findings', [])
-                all_findings.extend(findings)
-                logger.info(f"Fetched {len(findings)} findings in this page")
-            
-            logger.info(f"Total findings fetched: {len(all_findings)}")
-            return all_findings
-            
-        except ClientError as e:
-            error_code = e.response['Error']['Code']
-            if error_code == 'AccessDeniedException':
-                logger.error("Access denied. Check IAM permissions for Security Hub")
-            elif error_code == 'InvalidParameterException':
-                logger.error(f"Invalid parameters in filters: {e}")
-            else:
-                logger.error(f"AWS Security Hub error: {e}")
-            return []
+        # Get all available regions
+        regions = self._get_available_regions()
+        logger.info(f"Fetching findings from {len(regions)} regions")
         
-        except NoCredentialsError:
-            logger.error("No AWS credentials found. Ensure IAM role is properly configured")
-            return []
+        for region in regions:
+            try:
+                logger.info(f"Fetching findings from region: {region}")
+                client = boto3.client('securityhub', region_name=region)
+                
+                paginator = client.get_paginator('get_findings')
+                
+                for page in paginator.paginate(Filters=filters):
+                    findings = page.get('Findings', [])
+                    # Add region information to each finding
+                    for finding in findings:
+                        finding['Region'] = region
+                    all_findings.extend(findings)
+                    logger.info(f"Fetched {len(findings)} findings from {region} in this page")
+                
+                logger.info(f"Total findings fetched from {region}: {len([f for f in all_findings if f.get('Region') == region])}")
+                
+            except ClientError as e:
+                error_code = e.response['Error']['Code']
+                if error_code == 'AccessDeniedException':
+                    logger.warning(f"Access denied for region {region}. Skipping...")
+                elif error_code == 'InvalidParameterException':
+                    logger.warning(f"Invalid parameters in filters for region {region}: {e}")
+                else:
+                    logger.warning(f"AWS Security Hub error for region {region}: {e}")
+                continue
+            
+            except Exception as e:
+                logger.warning(f"Unexpected error fetching findings from region {region}: {e}")
+                continue
         
-        except Exception as e:
-            logger.error(f"Unexpected error fetching findings: {e}")
-            return []
+        logger.info(f"Total findings fetched from all regions: {len(all_findings)}")
+        return all_findings
     
     def get_findings_by_severity(self, severity: str) -> List[Dict[str, Any]]:
         """Get findings filtered by severity"""
@@ -108,7 +137,7 @@ class SecurityHubClient:
         return self.get_findings()
     
     def get_cspm_findings(self) -> List[Dict[str, Any]]:
-        """Get Security Hub CSPM findings specifically"""
+        """Get Security Hub CSPM findings specifically from all regions"""
         filters = {
             'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
             'ProductName': [
@@ -120,15 +149,30 @@ class SecurityHubClient:
         return self.get_findings(filters)
     
     def get_finding_by_id(self, finding_id: str) -> Optional[Dict[str, Any]]:
-        """Get a specific finding by ID"""
-        try:
-            response = self.client.get_findings(
-                Filters={
-                    'Id': [{'Value': finding_id, 'Comparison': 'EQUALS'}]
-                }
-            )
-            findings = response.get('Findings', [])
-            return findings[0] if findings else None
-        except Exception as e:
-            logger.error(f"Error fetching finding {finding_id}: {e}")
-            return None 
+        """Get a specific finding by ID from all regions"""
+        # Get all available regions
+        regions = self._get_available_regions()
+        
+        for region in regions:
+            try:
+                logger.info(f"Searching for finding {finding_id} in region: {region}")
+                client = boto3.client('securityhub', region_name=region)
+                
+                response = client.get_findings(
+                    Filters={
+                        'Id': [{'Value': finding_id, 'Comparison': 'EQUALS'}]
+                    }
+                )
+                findings = response.get('Findings', [])
+                if findings:
+                    finding = findings[0]
+                    finding['Region'] = region
+                    logger.info(f"Found finding {finding_id} in region {region}")
+                    return finding
+                    
+            except Exception as e:
+                logger.warning(f"Error searching for finding {finding_id} in region {region}: {e}")
+                continue
+        
+        logger.warning(f"Finding {finding_id} not found in any region")
+        return None 

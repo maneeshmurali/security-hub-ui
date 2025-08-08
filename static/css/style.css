@@ -33,6 +33,11 @@ body {
     position: relative;
 }
 
+/* Purple background for NEW findings card */
+.bg-purple {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%) !important;
+}
+
 .stats-card::before {
     content: '';
     position: absolute;

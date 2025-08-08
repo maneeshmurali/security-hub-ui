@@ -138,6 +138,7 @@ class SecurityHubDashboard {
             this.updateStatWithTrend('high-findings', stats.severity_distribution.HIGH || 0, 'high-trend');
             this.updateStatWithTrend('medium-findings', stats.severity_distribution.MEDIUM || 0, 'medium-trend');
             this.updateStatWithTrend('active-findings', stats.status_distribution.ACTIVE || 0, 'active-trend');
+            this.updateStatWithTrend('new-findings', stats.workflow_distribution.NEW || 0, 'new-trend');
             this.updateStatWithTrend('archived-findings', stats.status_distribution.ARCHIVED || 0, 'archived-trend');
             
             // Update last updated timestamp

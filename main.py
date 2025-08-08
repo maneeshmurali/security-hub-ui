@@ -387,6 +387,7 @@ async def get_stats():
         severity_counts = {}
         status_counts = {}
         product_counts = {}
+        workflow_counts = {}
 
         for finding in all_findings:
             # Severity counts
@@ -401,11 +402,16 @@ async def get_stats():
             product = finding.product_name or "UNKNOWN"
             product_counts[product] = product_counts.get(product, 0) + 1
 
+            # Workflow status counts
+            workflow = finding.workflow_status or "UNKNOWN"
+            workflow_counts[workflow] = workflow_counts.get(workflow, 0) + 1
+
         return {
             "total_findings": len(all_findings),
             "severity_distribution": severity_counts,
             "status_distribution": status_counts,
             "product_distribution": product_counts,
+            "workflow_distribution": workflow_counts,
             "last_updated": datetime.utcnow().isoformat()
         }
     except Exception as e:
@@ -416,6 +422,7 @@ async def get_stats():
             "severity_distribution": {},
             "status_distribution": {},
             "product_distribution": {},
+            "workflow_distribution": {},
             "last_updated": datetime.utcnow().isoformat()
         }
 

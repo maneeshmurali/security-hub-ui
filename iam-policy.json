@@ -37,6 +37,14 @@
             "Resource": "*"
         },
         {
+            "Sid": "EC2ReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeRegions"
+            ],
+            "Resource": "*"
+        },
+        {
             "Sid": "S3OptionalAccess",
             "Effect": "Allow",
             "Action": [
