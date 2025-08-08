@@ -424,7 +424,8 @@ class SecurityHubDashboard {
         })));
         
         const tbody = document.getElementById('findings-tbody');
-        const showDescriptions = document.getElementById('show-descriptions').checked;
+        const showDescriptionsElement = document.getElementById('show-descriptions');
+        const showDescriptions = showDescriptionsElement ? showDescriptionsElement.checked : false;
         
         if (this.findings.length === 0) {
             tbody.innerHTML = `

@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     app_port: int = 8000
     
     # Security Hub filters
-    default_severity_filter: str = "CRITICAL,HIGH,MEDIUM,LOW,INFORMATIONAL"
-    default_status_filter: str = "ACTIVE,SUPPRESSED"
+    default_severity_filter: str = "CRITICAL,HIGH,MEDIUM"
+    default_status_filter: str = "ACTIVE"
     
     # Additional settings (with defaults)
     enable_https: bool = False

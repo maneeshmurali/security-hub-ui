@@ -55,10 +55,16 @@ class SecurityHubClient:
         """
         all_findings = []
         
-        # Default filters if none provided - fetch all active findings regardless of workflow status
+        # Default filters if none provided - fetch only HIGH, CRITICAL, MEDIUM with NEW workflow
         if filters is None:
             filters = {
-                'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}]
+                'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
+                'SeverityLabel': [
+                    {'Value': 'CRITICAL', 'Comparison': 'EQUALS'},
+                    {'Value': 'HIGH', 'Comparison': 'EQUALS'},
+                    {'Value': 'MEDIUM', 'Comparison': 'EQUALS'}
+                ],
+                'WorkflowStatus': [{'Value': 'NEW', 'Comparison': 'EQUALS'}]
             }
         
         # Check if multi-region processing is enabled (can be disabled via environment variable)
@@ -74,9 +80,13 @@ class SecurityHubClient:
             regions = self._get_available_regions()
             logger.info(f"Found {len(regions)} regions to process")
             
-            # Limit to first 3 regions for maximum stability
-            regions = regions[:3]
-            logger.info(f"Processing limited set of regions: {regions}")
+            # Process all available regions for comprehensive coverage
+            max_regions = int(os.getenv('MAX_REGIONS', '0'))  # 0 means no limit
+            if max_regions > 0:
+                regions = regions[:max_regions]
+                logger.info(f"Processing limited set of regions: {regions} (max: {max_regions})")
+            else:
+                logger.info(f"Processing all available regions: {regions}")
             
             # Process regions one at a time for maximum stability
             batch_size = 1  # Process 1 region at a time
@@ -127,7 +137,7 @@ class SecurityHubClient:
                 
                 # Limit pagination to prevent infinite loops
                 page_count = 0
-                max_pages = 10  # Limit to 10 pages per region
+                max_pages = int(os.getenv('MAX_PAGES_PER_REGION', '20'))  # Limit to 20 pages per region
                 
                 for page in paginator.paginate(Filters=filters):
                     page_count += 1
@@ -203,14 +213,20 @@ class SecurityHubClient:
         return self.get_findings()
     
     def get_cspm_findings(self) -> List[Dict[str, Any]]:
-        """Get Security Hub CSPM findings specifically from the configured region"""
+        """Get Security Hub CSPM findings specifically with HIGH, CRITICAL, MEDIUM and NEW workflow"""
         filters = {
             'RecordState': [{'Value': 'ACTIVE', 'Comparison': 'EQUALS'}],
             'ProductName': [
                 {'Value': 'Security Hub', 'Comparison': 'EQUALS'},
                 {'Value': 'AWS Foundational Security Best Practices', 'Comparison': 'EQUALS'},
                 {'Value': 'AWS Security Hub', 'Comparison': 'EQUALS'}
-            ]
+            ],
+            'SeverityLabel': [
+                {'Value': 'CRITICAL', 'Comparison': 'EQUALS'},
+                {'Value': 'HIGH', 'Comparison': 'EQUALS'},
+                {'Value': 'MEDIUM', 'Comparison': 'EQUALS'}
+            ],
+            'WorkflowStatus': [{'Value': 'NEW', 'Comparison': 'EQUALS'}]
         }
         return self.get_findings(filters)
     
