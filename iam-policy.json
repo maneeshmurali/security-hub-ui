@@ -1,0 +1,58 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "SecurityHubReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "securityhub:GetFindings",
+                "securityhub:DescribeHub",
+                "securityhub:ListEnabledProductsForImport",
+                "securityhub:ListFindings",
+                "securityhub:ListInvitations",
+                "securityhub:ListMembers",
+                "securityhub:ListOrganizationAdminAccounts",
+                "securityhub:ListSecurityControlDefinitions",
+                "securityhub:ListStandardsControlAssociations",
+                "securityhub:ListStandards",
+                "securityhub:ListTagsForResource",
+                "securityhub:GetEnabledStandards",
+                "securityhub:GetFindings",
+                "securityhub:GetInsights",
+                "securityhub:GetInvitationsCount",
+                "securityhub:GetMasterAccount",
+                "securityhub:GetMembers",
+                "securityhub:GetSecurityControlDefinition",
+                "securityhub:GetStandardsControl",
+                "securityhub:GetUsage"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "STSReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "sts:GetCallerIdentity"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "S3OptionalAccess",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:ListBucket"
+            ],
+            "Resource": [
+                "arn:aws:s3:::YOUR-S3-BUCKET-NAME",
+                "arn:aws:s3:::YOUR-S3-BUCKET-NAME/*"
+            ],
+            "Condition": {
+                "StringEquals": {
+                    "aws:RequestTag/Application": "SecurityHubFindings"
+                }
+            }
+        }
+    ]
+} 

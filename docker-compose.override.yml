@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  security-hub-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/app
+      - /app/venv
+      - /app/__pycache__
+    environment:
+      - DEBUG=true
+      - AUTO_RELOAD=true
+      - LOG_LEVEL=DEBUG
+    command: ["python", "main.py"]
+    profiles:
+      - dev
+
+  # Development database (PostgreSQL for better development experience)
+  postgres:
+    image: postgres:15-alpine
+    container_name: security-hub-postgres-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=security_hub
+      - POSTGRES_USER=security_hub
+      - POSTGRES_PASSWORD=security_hub_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - security-hub-network
+    profiles:
+      - dev
+
+volumes:
+  postgres_dev_data:
+    driver: local 

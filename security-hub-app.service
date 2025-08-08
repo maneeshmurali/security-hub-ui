@@ -1,0 +1,28 @@
+[Unit]
+Description=AWS Security Hub Findings Application
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/opt/security-hub-app
+Environment=PATH=/opt/security-hub-app/venv/bin
+ExecStart=/opt/security-hub-app/venv/bin/python main.py
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=security-hub-app
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/security-hub-app/data /opt/security-hub-app/logs
+
+[Install]
+WantedBy=multi-user.target 
