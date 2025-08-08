@@ -7,15 +7,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Install system dependencies
 RUN dnf update -y && \
-    dnf install -y \
-    python3 \
-    python3-pip \
-    python3-devel \
-    gcc \
-    sqlite \
-    shadow-utils \
-    curl \
-    && dnf clean all
+    dnf install -y python3 python3-pip gcc shadow-utils && \
+    dnf clean all
 
 # Create app directory
 WORKDIR /app
@@ -44,7 +37,7 @@ EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/api/stats || exit 1
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/stats')" || exit 1
 
 # Run the application
 CMD ["python3", "main.py"] 
