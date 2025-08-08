@@ -52,7 +52,7 @@ create_directories() {
     print_status "Creating necessary directories..."
     
     mkdir -p data logs config
-    mkdir -p nginx/ssl traefik
+    chmod 755 data logs config
     mkdir -p scripts
     
     print_success "Directories created"

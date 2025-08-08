@@ -61,7 +61,21 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def create_tables():
-    Base.metadata.create_all(bind=engine)
+    import os
+    # Ensure the data directory exists and change to it
+    db_path = "/app/data"
+    if not os.path.exists(db_path):
+        os.makedirs(db_path, exist_ok=True)
+        os.chmod(db_path, 0o777)
+    
+    # Change to the data directory so the database file is created there
+    original_cwd = os.getcwd()
+    os.chdir(db_path)
+    
+    try:
+        Base.metadata.create_all(bind=engine)
+    finally:
+        os.chdir(original_cwd)
 
 
 def get_db():

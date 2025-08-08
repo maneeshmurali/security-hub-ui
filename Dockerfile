@@ -24,7 +24,7 @@ COPY . .
 
 # Create necessary directories
 RUN mkdir -p /app/data /app/logs /app/config && \
-    chmod 755 /app/data /app/logs /app/config
+    chmod 777 /app/data /app/logs /app/config
 
 # Create non-root user for security
 RUN useradd -m -u 1000 appuser && \

@@ -12,7 +12,7 @@ services:
       - "${APP_PORT:-8000}:8000"
     environment:
       - AWS_REGION=${AWS_REGION:-us-east-1}
-      - DATABASE_URL=${DATABASE_URL:-sqlite:////app/data/security_hub_findings.db}
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///security_hub_findings.db}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME:-}
       - S3_PREFIX=${S3_PREFIX:-security-hub-findings/}
       - POLLING_INTERVAL_MINUTES=${POLLING_INTERVAL_MINUTES:-30}
@@ -21,9 +21,9 @@ services:
       - DEFAULT_SEVERITY_FILTER=${DEFAULT_SEVERITY_FILTER:-CRITICAL,HIGH,MEDIUM,LOW,INFORMATIONAL}
       - DEFAULT_STATUS_FILTER=${DEFAULT_STATUS_FILTER:-ACTIVE,SUPPRESSED}
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./config:/app/config
+      - ./data:/app/data:rw
+      - ./logs:/app/logs:rw
+      - ./config:/app/config:rw
     networks:
       - security-hub-network
     healthcheck:
