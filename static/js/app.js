@@ -304,16 +304,16 @@ class SecurityHubDashboard {
                 _t: Date.now() // Cache busting parameter
             });
 
-            // Add filters
-            const severity = document.getElementById('severity-filter').value;
-            const status = document.getElementById('status-filter').value;
-            const product = document.getElementById('product-filter').value;
-            const workflow = document.getElementById('workflow-filter').value;
-            const region = document.getElementById('region-filter').value;
-            const account = document.getElementById('account-filter').value;
-            const compliance = document.getElementById('compliance-filter').value;
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
+            // Add filters with safe navigation
+            const severity = document.getElementById('severity-filter')?.value || '';
+            const status = document.getElementById('status-filter')?.value || '';
+            const product = document.getElementById('product-filter')?.value || '';
+            const workflow = document.getElementById('workflow-filter')?.value || '';
+            const region = document.getElementById('region-filter')?.value || '';
+            const account = document.getElementById('account-filter')?.value || '';
+            const compliance = document.getElementById('compliance-filter')?.value || '';
+            const startDate = document.getElementById('start-date')?.value || '';
+            const endDate = document.getElementById('end-date')?.value || '';
 
             if (severity) params.append('severity', severity);
             if (status) params.append('status', status);
@@ -351,7 +351,7 @@ class SecurityHubDashboard {
             })));
             
             this.renderFindings();
-            this.updatePagination();
+            // Note: updatePagination is not needed for controls view
         } catch (error) {
             console.error('Error loading findings:', error);
             this.showError('Failed to load findings');
@@ -983,12 +983,17 @@ class SecurityHubDashboard {
         const nextBtn = document.getElementById('next-btn');
         const info = document.getElementById('pagination-info');
         
-        prevBtn.disabled = this.currentPage === 0;
-        nextBtn.disabled = this.findings.length < this.pageSize;
-        
-        const start = this.currentPage * this.pageSize + 1;
-        const end = start + this.findings.length - 1;
-        info.textContent = `Showing ${start}-${end} of ${this.totalFindings} findings`;
+        if (prevBtn) {
+            prevBtn.disabled = this.currentPage === 0;
+        }
+        if (nextBtn) {
+            nextBtn.disabled = this.findings.length < this.pageSize;
+        }
+        if (info) {
+            const start = this.currentPage * this.pageSize + 1;
+            const end = start + this.findings.length - 1;
+            info.textContent = `Showing ${start}-${end} of ${this.totalFindings} findings`;
+        }
     }
 
     showLoading() {
