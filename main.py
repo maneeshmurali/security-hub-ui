@@ -578,6 +578,23 @@ async def test_finding_by_query(finding_id: str = Query(...)):
     except Exception as e:
         return {"error": str(e), "version": "v1.0.0-build-2025-08-08-v2"}
 
+@app.get("/api/test/comments-by-query")
+async def test_comments_by_query(finding_id: str = Query(...)):
+    """Get comments using query parameter instead of path parameter"""
+    try:
+        # Decode URL-encoded finding ID
+        decoded_finding_id = urllib.parse.unquote(finding_id)
+        
+        # Get comments for the finding
+        comments = data_manager.get_finding_comments(decoded_finding_id)
+        
+        return {
+            "version": "v1.0.0-build-2025-08-08-v2",
+            "comments": comments
+        }
+    except Exception as e:
+        return {"error": str(e), "version": "v1.0.0-build-2025-08-08-v2"}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host=settings.host, port=settings.port) 

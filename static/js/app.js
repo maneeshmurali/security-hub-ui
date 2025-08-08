@@ -413,7 +413,8 @@ class SecurityHubDashboard {
             this.currentFindingId = findingId; // Store the current finding ID
             console.log('Fetching finding with ID:', findingId);
             
-            const response = await fetch(`/api/findings/${findingId}`);
+            // Use query parameter approach instead of path parameter
+            const response = await fetch(`/api/test/finding-by-query?finding_id=${encodeURIComponent(findingId)}`);
             console.log('Response status:', response.status);
             
             if (!response.ok) {
@@ -422,10 +423,16 @@ class SecurityHubDashboard {
                 throw new Error(`API Error: ${response.status} - ${errorText}`);
             }
             
-            const finding = await response.json();
+            const result = await response.json();
             
             // Debug: Log the finding data
-            console.log('Finding data received:', finding);
+            console.log('Finding data received:', result);
+            
+            if (!result.found) {
+                throw new Error('Finding not found');
+            }
+            
+            const finding = result.finding;
             
             const modalBody = document.getElementById('finding-modal-body');
             modalBody.innerHTML = `
@@ -1005,13 +1012,14 @@ function viewComments() {
 
 async function loadComments(findingId) {
     try {
-        const response = await fetch(`/api/findings/${findingId}/comments`);
+        // Use query parameter approach instead of path parameter
+        const response = await fetch(`/api/test/comments-by-query?finding_id=${encodeURIComponent(findingId)}`);
         if (!response.ok) {
             throw new Error('Failed to load comments');
         }
         
-        const comments = await response.json();
-        renderComments(comments);
+        const result = await response.json();
+        renderComments(result.comments || []);
     } catch (error) {
         console.error('Error loading comments:', error);
         dashboard.showError('Failed to load comments');
