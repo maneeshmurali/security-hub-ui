@@ -458,6 +458,8 @@ async def get_controls(
 ):
     """Get security controls grouped by control ID with affected resource counts"""
     try:
+        logger.info(f"Controls API called with filters: severity={severity}, status={status}, workflow_status={workflow_status}")
+        
         # Parse dates if provided
         start_dt = None
         end_dt = None
@@ -479,6 +481,10 @@ async def get_controls(
             end_date=end_dt,
             limit=10000
         )
+        
+        logger.info(f"Found {len(all_findings)} findings for controls")
+        if all_findings:
+            logger.info(f"Sample findings: {[f.title for f in all_findings[:3]]}")
         
         # Group findings by control ID
         controls = {}
@@ -742,7 +748,7 @@ async def test_version():
     """Test version endpoint"""
     return {
         "version": "1.0.0", 
-        "build": "2025-08-08-v3",
+        "build": "2025-08-08-v4",
         "status": "latest",
         "features": [
             "URL decoding for finding IDs",
@@ -750,10 +756,60 @@ async def test_version():
             "Comments system",
             "Enhanced debugging",
             "24-hour refresh interval",
-            "Multi-region batch processing"
+            "Multi-region batch processing",
+            "Critical findings focus (HIGH, CRITICAL, MEDIUM + NEW)"
         ],
         "timestamp": datetime.utcnow().isoformat()
     }
+
+@app.get("/api/test/database-status")
+async def test_database_status():
+    """Debug endpoint to check database status"""
+    try:
+        # Get total findings count
+        total_count = len(data_manager.get_findings(limit=10000))
+        
+        # Get findings by severity
+        critical_findings = data_manager.get_findings(severity="CRITICAL", limit=10000)
+        high_findings = data_manager.get_findings(severity="HIGH", limit=10000)
+        medium_findings = data_manager.get_findings(severity="MEDIUM", limit=10000)
+        
+        # Get findings by workflow status
+        new_findings = data_manager.get_findings(workflow_status="NEW", limit=10000)
+        suppressed_findings = data_manager.get_findings(workflow_status="SUPPRESSED", limit=10000)
+        
+        # Get findings with new filters (HIGH, CRITICAL, MEDIUM + NEW)
+        critical_new = data_manager.get_findings(severity="CRITICAL", workflow_status="NEW", limit=10000)
+        high_new = data_manager.get_findings(severity="HIGH", workflow_status="NEW", limit=10000)
+        medium_new = data_manager.get_findings(severity="MEDIUM", workflow_status="NEW", limit=10000)
+        
+        return {
+            "database_status": "connected",
+            "total_findings": total_count,
+            "by_severity": {
+                "CRITICAL": len(critical_findings),
+                "HIGH": len(high_findings),
+                "MEDIUM": len(medium_findings)
+            },
+            "by_workflow": {
+                "NEW": len(new_findings),
+                "SUPPRESSED": len(suppressed_findings)
+            },
+            "critical_findings_with_new_workflow": {
+                "CRITICAL + NEW": len(critical_new),
+                "HIGH + NEW": len(high_new),
+                "MEDIUM + NEW": len(medium_new)
+            },
+            "sample_critical_new": [{"id": f.id, "title": f.title} for f in critical_new[:3]] if critical_new else [],
+            "sample_high_new": [{"id": f.id, "title": f.title} for f in high_new[:3]] if high_new else [],
+            "sample_medium_new": [{"id": f.id, "title": f.title} for f in medium_new[:3]] if medium_new else []
+        }
+    except Exception as e:
+        logger.error(f"Error checking database status: {e}")
+        return {
+            "database_status": "error",
+            "error": str(e)
+        }
 
 @app.get("/api/test/path-param/{test_id}")
 async def test_path_param(test_id: str):

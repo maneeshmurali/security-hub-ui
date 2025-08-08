@@ -39,35 +39,50 @@ class SecurityHubDashboard {
 
     setupEventListeners() {
         // Page size change
-        document.getElementById('page-size').addEventListener('change', (e) => {
-            this.pageSize = parseInt(e.target.value);
-            this.currentPage = 0;
-            this.loadFindings();
-        });
+        const pageSizeElement = document.getElementById('page-size');
+        if (pageSizeElement) {
+            pageSizeElement.addEventListener('change', (e) => {
+                this.pageSize = parseInt(e.target.value);
+                this.currentPage = 0;
+                this.loadControls();
+            });
+        }
 
         // Auto-refresh toggle
-        document.getElementById('auto-refresh').addEventListener('change', (e) => {
-            if (e.target.checked) {
-                this.setupAutoRefresh();
-            } else {
-                this.clearAutoRefresh();
-            }
-        });
+        const autoRefreshElement = document.getElementById('auto-refresh');
+        if (autoRefreshElement) {
+            autoRefreshElement.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    this.setupAutoRefresh();
+                } else {
+                    this.clearAutoRefresh();
+                }
+            });
+        }
 
         // Show descriptions toggle
-        document.getElementById('show-descriptions').addEventListener('change', (e) => {
-            this.renderFindings();
-        });
+        const showDescriptionsElement = document.getElementById('show-descriptions');
+        if (showDescriptionsElement) {
+            showDescriptionsElement.addEventListener('change', (e) => {
+                this.renderFindings();
+            });
+        }
 
         // Select all checkbox
-        document.getElementById('select-all').addEventListener('change', (e) => {
-            this.toggleSelectAll(e.target.checked);
-        });
+        const selectAllElement = document.getElementById('select-all');
+        if (selectAllElement) {
+            selectAllElement.addEventListener('change', (e) => {
+                this.toggleSelectAll(e.target.checked);
+            });
+        }
 
         // Header checkbox
-        document.getElementById('header-checkbox').addEventListener('change', (e) => {
-            this.toggleSelectAll(e.target.checked);
-        });
+        const headerCheckboxElement = document.getElementById('header-checkbox');
+        if (headerCheckboxElement) {
+            headerCheckboxElement.addEventListener('change', (e) => {
+                this.toggleSelectAll(e.target.checked);
+            });
+        }
     }
 
     setupAutoRefresh() {
@@ -424,6 +439,11 @@ class SecurityHubDashboard {
         })));
         
         const tbody = document.getElementById('findings-tbody');
+        if (!tbody) {
+            console.log('findings-tbody not found, skipping renderFindings');
+            return;
+        }
+        
         const showDescriptionsElement = document.getElementById('show-descriptions');
         const showDescriptions = showDescriptionsElement ? showDescriptionsElement.checked : false;
         
@@ -842,17 +862,21 @@ class SecurityHubDashboard {
 
     async manualFetch() {
         try {
-            const button = event.target;
-            const originalText = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Fetching...';
-            button.disabled = true;
+            // Find the manual fetch button
+            const button = document.querySelector('button[onclick*="manualFetch"]');
+            const originalText = button ? button.innerHTML : 'Manual Fetch';
+            
+            if (button) {
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Fetching...';
+                button.disabled = true;
+            }
             
             const response = await fetch('/api/findings/fetch', { method: 'POST' });
             const result = await response.json();
             
             if (response.ok) {
                 this.showSuccess('Manual fetch completed successfully');
-                await this.loadFindings();
+                await this.loadControls();
                 await this.loadStats();
             } else {
                 this.showError('Manual fetch failed');
@@ -861,9 +885,11 @@ class SecurityHubDashboard {
             console.error('Error during manual fetch:', error);
             this.showError('Manual fetch failed');
         } finally {
-            const button = event.target;
-            button.innerHTML = originalText;
-            button.disabled = false;
+            const button = document.querySelector('button[onclick*="manualFetch"]');
+            if (button) {
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
         }
     }
 
@@ -901,15 +927,15 @@ class SecurityHubDashboard {
     buildFilterParams() {
         const params = new URLSearchParams();
         
-        const severity = document.getElementById('severity-filter').value;
-        const status = document.getElementById('status-filter').value;
-        const product = document.getElementById('product-filter').value;
-        const workflow = document.getElementById('workflow-filter').value;
-        const region = document.getElementById('region-filter').value;
-        const account = document.getElementById('account-filter').value;
-        const compliance = document.getElementById('compliance-filter').value;
-        const startDate = document.getElementById('start-date').value;
-        const endDate = document.getElementById('end-date').value;
+        const severity = document.getElementById('severity-filter')?.value || '';
+        const status = document.getElementById('status-filter')?.value || '';
+        const product = document.getElementById('product-filter')?.value || '';
+        const workflow = document.getElementById('workflow-filter')?.value || '';
+        const region = document.getElementById('region-filter')?.value || '';
+        const account = document.getElementById('account-filter')?.value || '';
+        const compliance = document.getElementById('compliance-filter')?.value || '';
+        const startDate = document.getElementById('start-date')?.value || '';
+        const endDate = document.getElementById('end-date')?.value || '';
 
         if (severity) params.append('severity', severity);
         if (status) params.append('status', status);
