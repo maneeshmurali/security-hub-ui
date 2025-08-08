@@ -411,7 +411,17 @@ class SecurityHubDashboard {
     async viewFinding(findingId) {
         try {
             this.currentFindingId = findingId; // Store the current finding ID
-            const response = await fetch(`/api/findings/${findingId}`);
+            console.log('Fetching finding with ID:', findingId);
+            
+            const response = await fetch(`/api/findings/${encodeURIComponent(findingId)}`);
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error:', errorText);
+                throw new Error(`API Error: ${response.status} - ${errorText}`);
+            }
+            
             const finding = await response.json();
             
             // Debug: Log the finding data
@@ -461,7 +471,7 @@ class SecurityHubDashboard {
 
     async viewHistory(findingId) {
         try {
-            const response = await fetch(`/api/findings/${findingId}/history`);
+            const response = await fetch(`/api/findings/${encodeURIComponent(findingId)}/history`);
             const history = await response.json();
             
             const modalBody = document.getElementById('history-modal-body');
@@ -995,7 +1005,7 @@ function viewComments() {
 
 async function loadComments(findingId) {
     try {
-        const response = await fetch(`/api/findings/${findingId}/comments`);
+        const response = await fetch(`/api/findings/${encodeURIComponent(findingId)}/comments`);
         if (!response.ok) {
             throw new Error('Failed to load comments');
         }
@@ -1049,13 +1059,13 @@ async function addComment() {
         return;
     }
     
-    if (!currentFindingId) {
+    if (!dashboard.currentFindingId) {
         dashboard.showError('No finding selected');
         return;
     }
     
     try {
-        const response = await fetch(`/api/findings/${currentFindingId}/comments`, {
+        const response = await fetch(`/api/findings/${encodeURIComponent(dashboard.currentFindingId)}/comments`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1079,7 +1089,7 @@ async function addComment() {
         document.getElementById('internal-comment').checked = false;
         
         // Reload comments
-        await loadComments(currentFindingId);
+        await loadComments(dashboard.currentFindingId);
         
     } catch (error) {
         console.error('Error adding comment:', error);
@@ -1092,7 +1102,7 @@ async function editComment(commentId) {
     if (!newComment || !newComment.trim()) return;
     
     try {
-        const response = await fetch(`/api/findings/${currentFindingId}/comments/${commentId}`, {
+        const response = await fetch(`/api/findings/${encodeURIComponent(dashboard.currentFindingId)}/comments/${commentId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -1109,7 +1119,7 @@ async function editComment(commentId) {
         }
         
         dashboard.showSuccess('Comment updated successfully');
-        await loadComments(currentFindingId);
+        await loadComments(dashboard.currentFindingId);
         
     } catch (error) {
         console.error('Error updating comment:', error);
@@ -1121,7 +1131,7 @@ async function deleteComment(commentId) {
     if (!confirm('Are you sure you want to delete this comment?')) return;
     
     try {
-        const response = await fetch(`/api/findings/${currentFindingId}/comments/${commentId}`, {
+        const response = await fetch(`/api/findings/${encodeURIComponent(dashboard.currentFindingId)}/comments/${commentId}`, {
             method: 'DELETE'
         });
         
@@ -1130,7 +1140,7 @@ async function deleteComment(commentId) {
         }
         
         dashboard.showSuccess('Comment deleted successfully');
-        await loadComments(currentFindingId);
+        await loadComments(dashboard.currentFindingId);
         
     } catch (error) {
         console.error('Error deleting comment:', error);

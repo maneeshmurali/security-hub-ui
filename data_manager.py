@@ -203,7 +203,12 @@ class DataManager:
         """Get a specific finding by ID"""
         db = SessionLocal()
         try:
-            return db.query(Finding).filter(Finding.id == finding_id).first()
+            finding = db.query(Finding).filter(Finding.id == finding_id).first()
+            if finding:
+                logger.info(f"Found finding: {finding.id} - {finding.title}")
+            else:
+                logger.warning(f"No finding found with ID: {finding_id}")
+            return finding
         finally:
             db.close()
     
