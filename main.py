@@ -3,12 +3,13 @@ import urllib.parse
 from datetime import datetime, timedelta
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, Query, Depends
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.requests import Request
 from pydantic import BaseModel
 import io
+import os
 
 from models import create_tables, get_db
 from data_manager import DataManager
@@ -29,8 +30,23 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Optional CORS for local SPA dev
+try:
+    from fastapi.middleware.cors import CORSMiddleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+except Exception:
+    pass
+
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
+# Serve built SPA assets when available (non-blocking if missing)
+app.mount("/assets", StaticFiles(directory="frontend/dist/assets", check_dir=False), name="assets")
 
 # Setup templates
 templates = Jinja2Templates(directory="templates")
@@ -111,7 +127,10 @@ async def shutdown_event():
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    """Serve the main dashboard"""
+    """Serve the React SPA when built, fallback to legacy template in dev"""
+    index_path = os.path.join("frontend", "dist", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/api/findings", response_model=List[FindingResponse])

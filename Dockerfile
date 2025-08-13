@@ -1,5 +1,16 @@
+# ---------- Frontend build stage ----------
+FROM node:20-alpine AS frontend-build
+WORKDIR /app/frontend
+# Install dependencies
+COPY frontend/package*.json ./
+RUN npm ci || npm install
+# Copy sources and build
+COPY frontend/ ./
+RUN npm run build
+
+# ---------- Python runtime stage ----------
 # Use Amazon Linux 2023 as base image
-FROM public.ecr.aws/amazonlinux/amazonlinux:2023
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS python-runtime
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -21,6 +32,9 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
+
+# Copy built frontend artifacts
+COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
 # Create necessary directories
 RUN mkdir -p /app/data /app/logs /app/config && \
